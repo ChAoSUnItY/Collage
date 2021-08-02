@@ -1,0 +1,31 @@
+collageContext = _{ SOI ~ statement* ~ EOI }
+
+statement = _{ 
+    integer |
+    assignment
+}
+
+assignment = { identifier ~ "<-" ~ expression }
+
+expression = _{
+    integer |
+    decimal |
+    string |
+    binaryExpression |
+    wrappedExpression
+}
+
+binaryExpression = { "<" ~ expression ~ operators ~ expression ~ ">" }
+wrappedExpression = { "<" ~ expression ~ ">" }
+
+operators = { "+" | "-" | "*" | "/" }
+
+integer = @{ "_"? ~ ASCII_DIGIT+ }
+
+decimal = @{ "_"? ~ ASCII_DIGIT+ ~ "." ~ ASCII_DIGIT* }
+
+identifier = @{ ASCII_ALPHA ~ (ASCII_ALPHANUMERIC | "_")* }
+
+string = @{ "'" ~ ( "''" | (!"'" ~ ANY) )* ~ "'" }
+
+WHITESPACE = _{ " " | "\t" }
