@@ -10,13 +10,19 @@ static ALLOC: wee_alloc::WeeAlloc = wee_alloc::WeeAlloc::INIT;
 
 #[cfg(test)]
 mod test {
-    use crate::lexer;
+    use crate::{lexer, parser};
 
     #[test]
     fn arrow() {
         let mut lexer = lexer::Lexer::new("pow :: a -> a");
-        let tokens = &lexer.lex();
+        let tokens = lexer.lex();
 
-        println!("{:?}", tokens);
+        println!("{:?}", &tokens);
+
+        let mut parser = parser::Parser::new(tokens);
+        let ctx = parser.parse();
+
+        
+        println!("{:?}", &ctx);
     }
 }
