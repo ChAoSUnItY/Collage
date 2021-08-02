@@ -15,10 +15,29 @@ import { import_wasm } from './import_wasm';
 
             console.log(result);
 
-            $("#structure").text(JSON.stringify(result, null, ""));
-
-            console.log(JSON.stringify(result, null, ""));
-            console.log($("#structure").text())
+            $("#structure").html(syntaxHighlight(JSON.stringify(result, null, 2)));
         }
     })
 })()
+
+function syntaxHighlight(json: string) {
+    if (typeof json != 'string') {
+         json = JSON.stringify(json, undefined, 2);
+    }
+    json = json.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+    return json.replace(/("(\\u[a-zA-Z0-9]{4}|\\[^u]|[^\\"])*"(\s*:)?|\b(true|false|null)\b|-?\d+(?:\.\d*)?(?:[eE][+\-]?\d+)?)/g, function (match) {
+        var cls = 'number';
+        if (/^"/.test(match)) {
+            if (/:$/.test(match)) {
+                cls = 'key';
+            } else {
+                cls = 'string';
+            }
+        } else if (/true|false/.test(match)) {
+            cls = 'boolean';
+        } else if (/null/.test(match)) {
+            cls = 'null';
+        }
+        return '<span class="' + cls + '">' + match + '</span>';
+    });
+}
