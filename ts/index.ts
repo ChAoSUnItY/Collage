@@ -1,9 +1,24 @@
+import $ from 'jquery';
 import { import_wasm } from './import_wasm';
 
 (async () => {
     const collage = await import_wasm();
 
-    let result = collage.parse_as_json("a <- 1");
+    $("#source").bind("input propertychange", () => {
+        let source = $("#source").val()?.toString();
 
-    console.log(result);
+        if (source != undefined) {
+            console.log(typeof source)
+            console.log(source)
+
+            let result = collage.parse_as_json(source);
+
+            console.log(result);
+
+            $("#structure").text(JSON.stringify(result, null, ""));
+
+            console.log(JSON.stringify(result, null, ""));
+            console.log($("#structure").text())
+        }
+    })
 })()

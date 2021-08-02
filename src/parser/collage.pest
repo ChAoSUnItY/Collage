@@ -8,8 +8,8 @@ statement = _{
 assignment = { identifier ~ "<-" ~ expression }
 
 expression = _{
-    integer |
     decimal |
+    integer |
     string |
     binaryExpression |
     wrappedExpression
@@ -20,9 +20,9 @@ wrappedExpression = { "<" ~ expression ~ ">" }
 
 operators = { "+" | "-" | "*" | "/" }
 
-integer = @{ "_"? ~ ASCII_DIGIT+ }
+integer = @{ ASCII_DIGIT+ }
 
-decimal = @{ "_"? ~ ASCII_DIGIT+ ~ "." ~ ASCII_DIGIT* }
+decimal = @{ ASCII_DIGIT+ ~ "." ~ ASCII_DIGIT* }
 
 identifier = @{ ASCII_ALPHA ~ (ASCII_ALPHANUMERIC | "_")* }
 
