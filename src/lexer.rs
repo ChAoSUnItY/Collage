@@ -38,6 +38,14 @@ impl Lexer {
                         self.position += 2;
                     }
                 }
+                "~" => {
+                    tokens.push(Token::new("~", Type::Tilde));
+                    self.position += 1;
+                }
+                "|" => {
+                    tokens.push(Token::new("|", Type::VerticalBar));
+                    self.position += 1;
+                }
                 _ if ("0".."9").contains(char) => {
                     let start = *&self.position;
 
@@ -92,5 +100,7 @@ pub enum Type {
     Identifier,
     Number,
     Arrow,
+    Tilde,
+    VerticalBar,
     DoubleColon,
 }

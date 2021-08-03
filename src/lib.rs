@@ -16,7 +16,7 @@ mod test {
 
     #[test]
     fn arrow() {
-        let mut lexer = lexer::Lexer::new("pow :: i32 -> i32 -> ()");
+        let mut lexer = lexer::Lexer::new("pow :: i32 -> i32 -> () \n pow a b ~ 1");
         let tokens = lexer.lex();
 
         println!("{:?}", &tokens);

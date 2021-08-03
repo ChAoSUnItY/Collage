@@ -21,13 +21,14 @@ impl Emitter {
     pub fn emit(&mut self) -> Vec<u8> {
         let mut bytecode = vec![0x00, 0x61, 0x73, 0x6d, 0x01, 0x00, 0x00, 0x00]; // Magic Number & Version
 
-        let funtions: Vec<&CollageContext> = self
+        let functions: Vec<&CollageContext> = self
             .ctx
             .iter()
             .filter(|ctx| matches!(ctx, CollageContext::FunctionDeclaration(_, _, _)))
             .collect();
 
-        self.emit_types(&mut bytecode, &funtions);
+        self.emit_types(&mut bytecode, &functions);
+        self.emit_functions(&mut bytecode, &functions);
 
         bytecode
     }
@@ -51,6 +52,16 @@ impl Emitter {
         );
 
         bytecode.append(&mut function_types);
+    }
+
+    fn emit_functions(&self, bytecode: &mut Vec<u8>, functions: &Vec<&CollageContext>) {
+        let mut function_section = self.emit_section(
+            webassembly::SECTION_FUNCTION,
+            functions.len() as u8,
+            &mut vec![0x00],
+        );
+
+        bytecode.append(&mut function_section);
     }
 
     fn emit_function_type(&self, function: &CollageContext) -> Vec<u8> {
