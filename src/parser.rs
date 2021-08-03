@@ -50,11 +50,7 @@ impl Parser {
 
                         let return_type = argument_types.pop().unwrap();
 
-                        ctx.push(CollageContext::FunctionDeclaration {
-                            function_name: function_name.literal.clone(),
-                            argument_types,
-                            return_type,
-                        })
+                        ctx.push(CollageContext::FunctionDeclaration(function_name.literal.clone(),argument_types, return_type));
                     }
                 }
                 _ => {
@@ -67,9 +63,6 @@ impl Parser {
 
 #[derive(Debug)]
 pub enum CollageContext {
-    FunctionDeclaration {
-        function_name: String,
-        argument_types: Vec<String>,
-        return_type: String,
-    },
+    FunctionDeclaration(String, Vec<String>, String),
+    Data
 }
