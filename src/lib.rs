@@ -3,13 +3,9 @@ pub mod parser;
 mod utils;
 mod diagnostic;
 
-#[cfg(feature = "wee_alloc")]
-#[global_allocator]
-static ALLOC: wee_alloc::WeeAlloc = wee_alloc::WeeAlloc::INIT;
-
 #[cfg(test)]
 mod test {
-    use crate::{diagnostic::DiagnosticHolder, lexer, parser};
+    use crate::{diagnostic::DiagnosticHolder, lexer, parser, utils};
     use test_case::test_case;
     use crate::parser::SyntaxNode;
 
@@ -26,5 +22,9 @@ mod test {
         assert!(ctx[0].is_some());
 
         println!("{:?}", ctx[0].as_ref().unwrap().children());
+
+        for expression in ctx.iter() {
+            utils::print_syntax_tree(&Box::new(expression.to_owned()), "".to_string(), true);
+        }
     }
 }

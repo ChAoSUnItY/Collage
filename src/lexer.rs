@@ -34,8 +34,13 @@ impl Lexer {
                     self.position += 1;
                 }
                 "-" => {
-                    tokens.push(Token::new("-", Type::Minus));
-                    self.position += 1;
+                    if self.offset(&segmented_source, 1) == ">" {
+                        tokens.push(Token::new("->", Type::Arrow));
+                        self.position += 2;
+                    } else {
+                        tokens.push(Token::new("-", Type::Minus));
+                        self.position += 1;
+                    }
                 }
                 "*" => {
                     tokens.push(Token::new("*", Type::Star));
@@ -48,12 +53,6 @@ impl Lexer {
                 ":" => {
                     if self.offset(&segmented_source, 1) == ":" {
                         tokens.push(Token::new("::", Type::DoubleColon));
-                        self.position += 2;
-                    }
-                }
-                "-" => {
-                    if self.offset(&segmented_source, 1) == ">" {
-                        tokens.push(Token::new("->", Type::Arrow));
                         self.position += 2;
                     }
                 }
@@ -99,7 +98,7 @@ impl Lexer {
     }
 }
 
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, PartialEq)]
 pub struct Token {
     pub literal: String,
     pub token_type: Type,
@@ -114,9 +113,18 @@ impl Token {
     }
 }
 
-impl SyntaxNode for Token {
-    fn children(&self) -> Vec<Option<&dyn SyntaxNode>> {
-        vec![Some(self)]
+impl SyntaxNode<Token> for Token {
+    fn children(&self) -> Vec<Box<Option<Token>>> {
+        vec![]
+    }
+
+    fn as_string(&self) -> String {
+        format!("{:?}", self)
+    }
+
+    fn print(&self) {
+        print!(" ");
+        print!("{}", self.literal)
     }
 }
 

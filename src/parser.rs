@@ -1,4 +1,6 @@
-use std::fmt::{Display, Debug, Formatter};
+use std::fmt::Debug;
+
+use strum_macros::ToString;
 
 use crate::{
     diagnostic::DiagnosticHolder,
@@ -80,11 +82,15 @@ impl Parser {
     }
 }
 
-pub trait SyntaxNode: Debug {
-    fn children(&self) -> Vec<Option<&dyn SyntaxNode>>;
+pub trait SyntaxNode<T>: Debug + PartialEq where T: SyntaxNode<T> {
+    fn children(&self) -> Vec<Box<Option<T>>>;
+
+    fn as_string(&self) -> String;
+
+    fn print(&self);
 }
 
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, PartialEq, ToString)]
 pub enum Expression {
     Integer(Box<Token>),
     Float(Box<Token>),
@@ -92,13 +98,22 @@ pub enum Expression {
     Subtraction(Box<Option<Expression>>, Box<Option<Expression>>),
 }
 
-impl SyntaxNode for Expression {
-    fn children(&self) -> Vec<Option<&dyn SyntaxNode>> {
-        match self {
-            &Expression::Integer(token) => token.children(),
-            &Expression::Float(token) => token.children(),
-            &Expression::Addition(left, right) => vec![*left.as_ref(), *right.as_ref()],
-            &Expression::Subtraction(left, right) => vec![*left.as_ref(), *right.as_ref()]
+impl SyntaxNode<Expression> for Expression {
+    fn children(&self) -> Vec<Box<Option<Expression>>> {
+        match self.clone() {
+            Expression::Integer(token) => vec![],
+            Expression::Float(token) => vec![],
+            Expression::Addition(left, right) => vec![left, right],
+            Expression::Subtraction(left, right) => vec![left, right]
         }
     }
+
+    fn as_string(&self) -> String {
+        match self {
+            Expression::Integer(token) => format!("{}({})", self.to_string(), token.literal),
+            _ => self.to_string()
+        }
+    }
+
+    fn print(&self) {}
 }
