@@ -1,3 +1,6 @@
+use crate::diagnostic::DiagnosticHolder;
+use crate::parser::SyntaxNode;
+
 pub struct Lexer {
     position: usize,
     source: &'static str,
@@ -15,7 +18,7 @@ impl Lexer {
         segmented_source[self.position + offset].to_string()
     }
 
-    pub fn lex(&mut self) -> Vec<Token> {
+    pub fn lex(&mut self, diagnostic_holder: &DiagnosticHolder) -> Vec<Token> {
         use unicode_segmentation::UnicodeSegmentation;
 
         let segmented_source =
@@ -26,6 +29,22 @@ impl Lexer {
             let char = &segmented_source[self.position];
 
             match *char {
+                "+" => {
+                    tokens.push(Token::new("+", Type::Plus));
+                    self.position += 1;
+                }
+                "-" => {
+                    tokens.push(Token::new("-", Type::Minus));
+                    self.position += 1;
+                }
+                "*" => {
+                    tokens.push(Token::new("*", Type::Star));
+                    self.position += 1;
+                }
+                "/" => {
+                    tokens.push(Token::new("/", Type::Slash));
+                    self.position += 1;
+                }
                 ":" => {
                     if self.offset(&segmented_source, 1) == ":" {
                         tokens.push(Token::new("::", Type::DoubleColon));
@@ -80,7 +99,7 @@ impl Lexer {
     }
 }
 
-#[derive(Debug)]
+#[derive(Debug, Clone)]
 pub struct Token {
     pub literal: String,
     pub token_type: Type,
@@ -95,10 +114,20 @@ impl Token {
     }
 }
 
-#[derive(Debug, PartialEq)]
+impl SyntaxNode for Token {
+    fn children(&self) -> Vec<Option<&dyn SyntaxNode>> {
+        vec![Some(self)]
+    }
+}
+
+#[derive(Debug, Clone, PartialEq)]
 pub enum Type {
     Identifier,
     Number,
+    Plus,
+    Minus,
+    Star,
+    Slash,
     Arrow,
     Tilde,
     VerticalBar,

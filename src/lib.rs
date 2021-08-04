@@ -1,9 +1,7 @@
 pub mod lexer;
 pub mod parser;
-pub mod emitter;
 mod utils;
-
-use wasm_bindgen::prelude::*;
+mod diagnostic;
 
 #[cfg(feature = "wee_alloc")]
 #[global_allocator]
@@ -11,27 +9,22 @@ static ALLOC: wee_alloc::WeeAlloc = wee_alloc::WeeAlloc::INIT;
 
 #[cfg(test)]
 mod test {
-    use std::{fs::File, io::Write};
-    use crate::{emitter, lexer, parser};
+    use crate::{diagnostic::DiagnosticHolder, lexer, parser};
+    use test_case::test_case;
+    use crate::parser::SyntaxNode;
 
-    #[test]
-    fn arrow() {
-        let mut lexer = lexer::Lexer::new("pow :: i32 -> i32 -> () \n pow a b ~ 1");
-        let tokens = lexer.lex();
-
-        println!("{:?}", &tokens);
+    #[test_case("1 + 2 + 3" ; "plus expression")]
+    fn expression_parsing_test(source_code: &'static str) {
+        let mut diagnostic_holder = DiagnosticHolder::new();
+        let mut lexer = lexer::Lexer::new(source_code);
+        let tokens = lexer.lex(&diagnostic_holder);
 
         let mut parser = parser::Parser::new(tokens);
-        let ctx = parser.parse();
+        let ctx = parser.parse(&mut diagnostic_holder);
 
-        println!("{:?}", &ctx);
+        assert_eq!(ctx.len(), 1);
+        assert!(ctx[0].is_some());
 
-        let mut emitter = emitter::Emitter::new(ctx);
-        let bytecode = emitter.emit();
-
-        println!("{:#04X?}", &bytecode);
-
-        let mut output = File::create("examples/out/collage.wasm").expect("Unknown fs error.");
-        output.write_all(&bytecode);
+        println!("{:?}", ctx[0].as_ref().unwrap().children());
     }
 }
