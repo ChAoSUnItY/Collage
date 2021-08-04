@@ -12,6 +12,7 @@ mod test {
     use crate::runtime::Evaluator;
 
     #[test_case("1 + 2 + 3", 6 ; "plus expression")]
+    #[test_case("1 - 2 - 3", -4 ; "minus expression")]
     fn expression_parsing_test(source_code: &'static str, result: i64) {
         let mut diagnostic_holder = DiagnosticHolder::new();
         let mut lexer = lexer::Lexer::new(source_code);

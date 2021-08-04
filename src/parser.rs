@@ -58,6 +58,10 @@ impl Parser {
                         Box::new(left),
                         Box::new(self.parse_expression(holder)),
                     )),
+                    &Type::Minus => Some(Expression::Subtraction(
+                        Box::new(left),
+                        Box::new(self.parse_expression(holder)),
+                    )),
                     _ => None,
                 };
 

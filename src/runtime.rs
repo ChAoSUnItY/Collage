@@ -21,8 +21,11 @@ impl Evaluator {
                 token.literal.clone().parse::<i64>().unwrap(),
             Expression::Addition(left, right) =>
                 self.eval_binary(left, right).iter().sum(),
-            Expression::Subtraction(left, right) =>
-                self.eval_binary(left, right).iter().sum(),
+            Expression::Subtraction(left, right) => {
+                let evaluated_binary = self.eval_binary(left, right);
+
+                evaluated_binary[0] - evaluated_binary[1]
+            }
             _ => panic!("Unexpected expression while evaluating.")
         }
     }
