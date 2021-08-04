@@ -86,7 +86,10 @@ impl Parser {
     }
 }
 
-pub trait SyntaxNode<T>: Debug + PartialEq where T: SyntaxNode<T> {
+pub trait SyntaxNode<T>: Debug + PartialEq
+where
+    T: SyntaxNode<T>,
+{
     fn children(&self) -> Vec<Box<Option<T>>>;
 
     fn as_string(&self) -> String;
@@ -108,14 +111,14 @@ impl SyntaxNode<Expression> for Expression {
             Expression::Integer(token) => vec![],
             Expression::Float(token) => vec![],
             Expression::Addition(left, right) => vec![left, right],
-            Expression::Subtraction(left, right) => vec![left, right]
+            Expression::Subtraction(left, right) => vec![left, right],
         }
     }
 
     fn as_string(&self) -> String {
         match self {
             Expression::Integer(token) => format!("{}({})", self.to_string(), token.literal),
-            _ => self.to_string()
+            _ => self.to_string(),
         }
     }
 

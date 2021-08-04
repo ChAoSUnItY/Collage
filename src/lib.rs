@@ -1,15 +1,15 @@
+mod diagnostic;
 pub mod lexer;
 pub mod parser;
-mod utils;
-mod diagnostic;
 mod runtime;
+mod utils;
 
 #[cfg(test)]
 mod test {
-    use crate::{diagnostic::DiagnosticHolder, lexer, parser, utils};
-    use test_case::test_case;
     use crate::parser::SyntaxNode;
     use crate::runtime::Evaluator;
+    use crate::{diagnostic::DiagnosticHolder, lexer, parser, utils};
+    use test_case::test_case;
 
     #[test_case("1 + 2 + 3", 6 ; "plus expression")]
     #[test_case("1 - 2 - 3", -4 ; "minus expression")]
