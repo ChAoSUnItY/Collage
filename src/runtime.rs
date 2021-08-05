@@ -1,6 +1,5 @@
 use crate::parser::Expression;
 use std::any::Any;
-use std::fmt::Debug;
 
 pub struct Evaluator {
     root_expression: Expression,

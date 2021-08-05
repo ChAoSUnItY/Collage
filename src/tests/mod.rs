@@ -9,7 +9,6 @@ mod test {
         runtime::Evaluator,
         utils::{print_syntax_tree, to_string},
     };
-    use std::any::Any;
     use std::fmt::Display;
 
     #[test_case("1 + 2 + 3", 6 as i64 ; "addition expression")]
