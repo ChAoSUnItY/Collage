@@ -20,52 +20,81 @@ impl Parser {
         }
     }
 
-    fn peek(&self, offset: usize) -> &Token {
-        &self.tokens[self.position + offset]
-    }
-
-    fn next(&mut self) -> Option<&Token> {
-        self.position += 1;
-        self.tokens.get(self.position - 1)
+    fn peek(&self, offset: usize) -> Option<&Token> {
+        self.tokens.get(self.position.clone() + offset)
     }
 
     fn assert(&mut self, token_type: Type) -> Option<&Token> {
-        if self.peek(0).token_type == token_type {
-            let token = &self.tokens[self.position];
-            self.position += 1;
-            Some(token)
-        } else {
-            None
+        let current = self.peek(0);
+
+        if let Some(token) = current {
+            if token.token_type == token_type {
+                let token = &self.tokens[self.position];
+                self.position += 1;
+                return Some(token);
+            }
+        }
+
+        None
+    }
+
+    pub fn parse(&mut self, holder: &mut DiagnosticHolder) -> Tree {
+        Tree {
+            root_expression: self.parse_term(holder),
         }
     }
 
-    pub fn parse(&mut self, holder: &mut DiagnosticHolder) -> Vec<Option<Expression>> {
-        let mut ctx = Vec::<Option<Expression>>::new();
+    fn parse_term(&mut self, holder: &mut DiagnosticHolder) -> Option<Expression> {
+        let mut left = self.parse_factor(holder);
 
-        ctx.push(self.parse_expressions(holder));
+        while let Some(token) = self.tokens.get(self.position) {
+            if token.token_type == Type::Plus || token.token_type == Type::Minus {
+                self.position += 1;
 
-        ctx
+                left = match token.token_type {
+                    Type::Plus => Some(Expression::Addition(
+                        Box::new(left),
+                        Box::new(self.parse_factor(holder)),
+                    )),
+                    Type::Minus => Some(Expression::Subtraction(
+                        Box::new(left),
+                        Box::new(self.parse_factor(holder)),
+                    )),
+                    _ => None,
+                };
+            } else {
+                break;
+            }
+        }
+
+        left
     }
 
-    fn parse_expressions(&mut self, holder: &mut DiagnosticHolder) -> Option<Expression> {
+    fn parse_factor(&mut self, holder: &mut DiagnosticHolder) -> Option<Expression> {
         let mut left = self.parse_expression(holder);
-        let mut current = self.next();
 
-        while let Some(token) = current {
-            if token.token_type == Type::Plus || token.token_type == Type::Minus {
+        while let Some(token) = self.tokens.get(self.position) {
+            if token.token_type == Type::Star
+                || token.token_type == Type::Slash
+                || token.token_type == Type::Percent
+            {
+                self.position += 1;
+
                 left = match &token.token_type {
-                    &Type::Plus => Some(Expression::Addition(
+                    &Type::Star => Some(Expression::Multiplication(
                         Box::new(left),
                         Box::new(self.parse_expression(holder)),
                     )),
-                    &Type::Minus => Some(Expression::Subtraction(
+                    &Type::Slash => Some(Expression::Division(
+                        Box::new(left),
+                        Box::new(self.parse_expression(holder)),
+                    )),
+                    &Type::Percent => Some(Expression::Remainder(
                         Box::new(left),
                         Box::new(self.parse_expression(holder)),
                     )),
                     _ => None,
                 };
-
-                current = self.next();
             } else {
                 break;
             }
@@ -75,12 +104,43 @@ impl Parser {
     }
 
     fn parse_expression(&mut self, holder: &mut DiagnosticHolder) -> Option<Expression> {
-        let number_token = self.assert(Type::Number);
+        let current = self.tokens.get(self.position);
 
-        if let Some(token) = number_token {
-            Some(Expression::Integer(Box::new(token.to_owned())))
+        if let Some(token) = current {
+            match token.token_type {
+                Type::OpenParenthesis => {
+                    std::mem::drop(self.assert(Type::OpenParenthesis));
+                    let expression = self.parse_term(holder);
+                    std::mem::drop(self.assert(Type::CloseParenthesis));
+
+                    Some(Expression::Parenthesis(Box::new(expression)))
+                }
+                Type::Number => {
+                    let number_token = self.assert(Type::Number);
+
+                    if let Some(token) = number_token {
+                        Some(Expression::Integer(Box::new(token.to_owned())))
+                    } else {
+                        holder.error("Unexpected parsing error: Expected integer.");
+                        None
+                    }
+                }
+                Type::Identifier => {
+                    let identifier_token = self.assert(Type::Identifier);
+
+                    if let Some(token) = identifier_token {
+                        match token.literal.as_str() {
+                            "true" | "false" => Some(Expression::Bool(Box::new(token.to_owned()))),
+                            _ => Some(Expression::Literal(Box::new(token.to_owned()))),
+                        }
+                    } else {
+                        holder.error("Unexpected parsing error: Expected identifier / literal.");
+                        None
+                    }
+                }
+                _ => panic!("Unknown expression."),
+            }
         } else {
-            holder.error("Unexpected parsing error: Expected integer.");
             None
         }
     }
@@ -97,26 +157,42 @@ where
     fn print(&self);
 }
 
+#[derive(Debug, Clone)]
+pub struct Tree {
+    pub root_expression: Option<Expression>,
+}
+
 #[derive(Debug, Clone, PartialEq, ToString)]
 pub enum Expression {
+    Literal(Box<Token>),
+    Bool(Box<Token>),
     Integer(Box<Token>),
     Float(Box<Token>),
     Addition(Box<Option<Expression>>, Box<Option<Expression>>),
     Subtraction(Box<Option<Expression>>, Box<Option<Expression>>),
+    Multiplication(Box<Option<Expression>>, Box<Option<Expression>>),
+    Division(Box<Option<Expression>>, Box<Option<Expression>>),
+    Remainder(Box<Option<Expression>>, Box<Option<Expression>>),
+    Parenthesis(Box<Option<Expression>>),
 }
 
 impl SyntaxNode<Expression> for Expression {
     fn children(&self) -> Vec<Box<Option<Expression>>> {
         match self.clone() {
-            Expression::Integer(token) => vec![],
-            Expression::Float(token) => vec![],
             Expression::Addition(left, right) => vec![left, right],
             Expression::Subtraction(left, right) => vec![left, right],
+            Expression::Multiplication(left, right) => vec![left, right],
+            Expression::Division(left, right) => vec![left, right],
+            Expression::Remainder(left, right) => vec![left, right],
+            Expression::Parenthesis(expression) => vec![expression],
+            _ => vec![],
         }
     }
 
     fn as_string(&self) -> String {
         match self {
+            Expression::Literal(token) => format!("{}({})", self.to_string(), token.literal),
+            Expression::Bool(token) => format!("{}({})", self.to_string(), token.literal),
             Expression::Integer(token) => format!("{}({})", self.to_string(), token.literal),
             _ => self.to_string(),
         }

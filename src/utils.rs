@@ -1,8 +1,21 @@
+use std::any::{Any, TypeId};
+use std::fmt::Display;
+
 use crate::parser::SyntaxNode;
 
 pub fn set_panic_hook() {
     #[cfg(feature = "console_error_panic_hook")]
     console_error_panic_hook::set_once();
+}
+
+pub fn to_string<T: Display + 'static>(any: &dyn Any) -> Result<String, &'static str> {
+    if any.type_id() == TypeId::of::<T>() {
+        if let Some(val) = any.downcast_ref::<T>() {
+            Ok(val.to_string())
+        }
+    }
+
+    Err("")
 }
 
 pub fn print_syntax_tree<T: SyntaxNode<T> + PartialEq>(

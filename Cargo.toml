@@ -8,7 +8,6 @@ readme = "README.md"
 edition = "2018"
 
 [lib]
-name = "collage"
 path = "src/lib.rs"
 crate-type = ["cdylib"]
 

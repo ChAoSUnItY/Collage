@@ -50,6 +50,18 @@ impl Lexer {
                     tokens.push(Token::new("/", Type::Slash));
                     self.position += 1;
                 }
+                "%" => {
+                    tokens.push(Token::new("%", Type::Percent));
+                    self.position += 1;
+                }
+                "(" => {
+                    tokens.push(Token::new("(", Type::OpenParenthesis));
+                    self.position += 1;
+                }
+                ")" => {
+                    tokens.push(Token::new(")", Type::CloseParenthesis));
+                    self.position += 1;
+                }
                 ":" => {
                     if self.offset(&segmented_source, 1) == ":" {
                         tokens.push(Token::new("::", Type::DoubleColon));
@@ -136,6 +148,9 @@ pub enum Type {
     Minus,
     Star,
     Slash,
+    Percent,
+    OpenParenthesis,
+    CloseParenthesis,
     Arrow,
     Tilde,
     VerticalBar,
