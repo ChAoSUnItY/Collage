@@ -3,11 +3,11 @@ use crate::parser::SyntaxNode;
 
 pub struct Lexer {
     position: usize,
-    source: &'static str,
+    source: String,
 }
 
 impl Lexer {
-    pub fn new(source: &'static str) -> Self {
+    pub fn new(source: String) -> Self {
         Self {
             position: 0,
             source,
@@ -22,7 +22,7 @@ impl Lexer {
         use unicode_segmentation::UnicodeSegmentation;
 
         let segmented_source =
-            UnicodeSegmentation::graphemes(self.source, true).collect::<Vec<&str>>();
+            UnicodeSegmentation::graphemes(self.source.as_str(), true).collect::<Vec<&str>>();
         let mut tokens = Vec::<Token>::new();
 
         while self.position < segmented_source.len() {
@@ -52,6 +52,10 @@ impl Lexer {
                 }
                 "%" => {
                     tokens.push(Token::new("%", Type::Percent));
+                    self.position += 1;
+                }
+                "!" => {
+                    tokens.push(Token::new("!", Type::Bang));
                     self.position += 1;
                 }
                 "(" => {
@@ -134,10 +138,7 @@ impl SyntaxNode<Token> for Token {
         format!("{:?}", self)
     }
 
-    fn print(&self) {
-        print!(" ");
-        print!("{}", self.literal)
-    }
+    fn print(&self) {}
 }
 
 #[derive(Debug, Clone, PartialEq)]
@@ -149,6 +150,7 @@ pub enum Type {
     Star,
     Slash,
     Percent,
+    Bang,
     OpenParenthesis,
     CloseParenthesis,
     Arrow,
@@ -158,6 +160,13 @@ pub enum Type {
 }
 
 impl Type {
+    pub fn unary_precedence(&self) -> usize {
+        match self {
+            Type::Plus | Type::Minus | Type::Bang => 3,
+            _ => 0,
+        }
+    }
+
     pub fn binary_precedence(&self) -> usize {
         match self {
             Type::Star | Type::Slash | Type::Percent => 2,

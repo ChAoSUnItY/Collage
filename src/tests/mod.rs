@@ -19,9 +19,12 @@ mod test {
     #[test_case("(20 + 1) * 5", 105 as i64 ; "parenthesis expression")]
     #[test_case("10 + 1 * 5", 15 as i64 ; "precedence test")]
     #[test_case("true", true ; "true bool literal test")]
+    #[test_case("+1 + 1", 2 as i64 ; "positive expression test")]
+    #[test_case("-1 + 1", 0 as i64 ; "negative expression test")]
+    #[test_case("!true", false ; "NOT expression test")]
     fn expression_parsing_test<T: Display + 'static>(source_code: &'static str, result: T) {
         let mut diagnostic_holder = DiagnosticHolder::new();
-        let mut lexer = Lexer::new(source_code);
+        let mut lexer = Lexer::new(source_code.to_string());
         let tokens = lexer.lex(&diagnostic_holder);
 
         let mut parser = Parser::new(tokens);

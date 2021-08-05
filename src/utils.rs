@@ -43,3 +43,34 @@ pub fn print_syntax_tree<T: SyntaxNode<T> + PartialEq>(
         }
     }
 }
+
+pub fn get_syntax_tree<T: SyntaxNode<T> + PartialEq>(
+    builder: &mut String,
+    node: &Box<Option<T>>,
+    mut indent: String,
+    is_last: bool,
+) -> String {
+    if let Some(syntax_node) = node.as_ref() {
+        let marker = if is_last { "└──" } else { "├──" };
+
+        builder.push_str(&*indent);
+        builder.push_str(marker);
+        builder.push_str(&*format!("{:}", syntax_node.as_string()));
+        builder.push('\n');
+
+        indent.push_str(if is_last { "   " } else { "│  " });
+
+        let last = syntax_node.children();
+
+        for child in syntax_node.children() {
+            get_syntax_tree(
+                builder,
+                &child,
+                indent.clone(),
+                child == *last.last().unwrap(),
+            );
+        }
+    }
+
+    builder.clone()
+}

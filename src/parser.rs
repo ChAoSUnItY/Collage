@@ -49,7 +49,29 @@ impl Parser {
         parent_precedence: usize,
         holder: &mut DiagnosticHolder,
     ) -> Option<Expression> {
-        let mut left = self.parse_literal_expression(holder);
+        let mut left: Option<Expression> = None;
+        if let Some(precedence_token) = self.tokens.get(self.position) {
+            let precedence = precedence_token.token_type.unary_precedence();
+
+            left = if precedence != 0 && precedence >= parent_precedence {
+                self.position += 1;
+
+                match precedence_token.token_type {
+                    Type::Plus => Some(Expression::Positive(Box::new(
+                        self.parse_expression(precedence, holder),
+                    ))),
+                    Type::Minus => Some(Expression::Negative(Box::new(
+                        self.parse_expression(precedence, holder),
+                    ))),
+                    Type::Bang => Some(Expression::NOT(Box::new(
+                        self.parse_expression(precedence, holder),
+                    ))),
+                    _ => None,
+                }
+            } else {
+                self.parse_literal_expression(holder)
+            }
+        }
 
         loop {
             if let Some(precedence_token) = self.tokens.get(self.position) {
@@ -58,34 +80,31 @@ impl Parser {
                 if precedence == 0 || precedence <= parent_precedence {
                     break;
                 }
+                self.position += 1;
 
-                if let Some(token) = self.tokens.get(self.position) {
-                    self.position += 1;
-
-                    left = match token.token_type {
-                        Type::Plus => Some(Expression::Addition(
-                            Box::new(left),
-                            Box::new(self.parse_expression(precedence, holder)),
-                        )),
-                        Type::Minus => Some(Expression::Subtraction(
-                            Box::new(left),
-                            Box::new(self.parse_expression(precedence, holder)),
-                        )),
-                        Type::Star => Some(Expression::Multiplication(
-                            Box::new(left),
-                            Box::new(self.parse_expression(precedence, holder)),
-                        )),
-                        Type::Slash => Some(Expression::Division(
-                            Box::new(left),
-                            Box::new(self.parse_expression(precedence, holder)),
-                        )),
-                        Type::Percent => Some(Expression::Remainder(
-                            Box::new(left),
-                            Box::new(self.parse_expression(precedence, holder)),
-                        )),
-                        _ => None,
-                    };
-                }
+                left = match precedence_token.token_type {
+                    Type::Plus => Some(Expression::Addition(
+                        Box::new(left),
+                        Box::new(self.parse_expression(precedence, holder)),
+                    )),
+                    Type::Minus => Some(Expression::Subtraction(
+                        Box::new(left),
+                        Box::new(self.parse_expression(precedence, holder)),
+                    )),
+                    Type::Star => Some(Expression::Multiplication(
+                        Box::new(left),
+                        Box::new(self.parse_expression(precedence, holder)),
+                    )),
+                    Type::Slash => Some(Expression::Division(
+                        Box::new(left),
+                        Box::new(self.parse_expression(precedence, holder)),
+                    )),
+                    Type::Percent => Some(Expression::Remainder(
+                        Box::new(left),
+                        Box::new(self.parse_expression(precedence, holder)),
+                    )),
+                    _ => None,
+                };
             } else {
                 break;
             }
@@ -129,7 +148,7 @@ impl Parser {
                         None
                     }
                 }
-                _ => panic!("Unknown expression."),
+                _ => panic!("Unknown expression: {:?}", token),
             }
         } else {
             None
@@ -159,6 +178,9 @@ pub enum Expression {
     Bool(Box<Token>),
     Integer(Box<Token>),
     Float(Box<Token>),
+    Positive(Box<Option<Expression>>),
+    Negative(Box<Option<Expression>>),
+    NOT(Box<Option<Expression>>),
     Addition(Box<Option<Expression>>, Box<Option<Expression>>),
     Subtraction(Box<Option<Expression>>, Box<Option<Expression>>),
     Multiplication(Box<Option<Expression>>, Box<Option<Expression>>),
@@ -170,6 +192,9 @@ pub enum Expression {
 impl SyntaxNode<Expression> for Expression {
     fn children(&self) -> Vec<Box<Option<Expression>>> {
         match self.clone() {
+            Expression::Positive(expression) => vec![expression],
+            Expression::Negative(expression) => vec![expression],
+            Expression::NOT(expression) => vec![expression],
             Expression::Addition(left, right) => vec![left, right],
             Expression::Subtraction(left, right) => vec![left, right],
             Expression::Multiplication(left, right) => vec![left, right],

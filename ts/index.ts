@@ -8,14 +8,17 @@ import { import_wasm } from './import_wasm';
         let source = $("#source").val()?.toString();
 
         if (source != undefined) {
-            console.log(typeof source)
-            console.log(source)
+            console.time("compilation");
+            let result = collage.evaluate(source);
 
-            let result = collage.parse_as_json(source);
+            $(".output").text(result);
 
-            console.log(result);
+            let tree = collage.get_syntax_tree(source);
+            console.timeEnd("compilation");
 
-            $("#structure").html(syntaxHighlight(JSON.stringify(result, null, 2)));
+            $(".syntax_tree").text(tree);
+
+            // $("#structure").html(syntaxHighlight(JSON.stringify(result, null, 2)));
         }
     })
 })()

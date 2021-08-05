@@ -1,5 +1,5 @@
-.string { color: green; }
-.number { color: darkorange; }
-.boolean { color: blue; }
-.null { color: magenta; }
-.key { color: red; }
+textarea {
+    border: none;
+    outline: none;
+    resize: none;
+}

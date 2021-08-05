@@ -1,5 +1,6 @@
-use crate::parser::Expression;
 use std::any::Any;
+
+use crate::parser::Expression;
 
 pub struct Evaluator {
     root_expression: Expression,
@@ -20,6 +21,33 @@ impl Evaluator {
             Expression::Integer(token) => Box::new(token.literal.clone().parse::<i64>().unwrap()),
             Expression::Parenthesis(expression) => {
                 self.eval_expression(&expression.clone().unwrap())
+            }
+            Expression::Positive(expression) => {
+                let evaluated_expression = self.eval_expression(&expression.clone().unwrap());
+
+                if let Ok(val) = evaluated_expression.downcast::<i64>() {
+                    Box::new(*val)
+                } else {
+                    panic!("Cannot apply positive on non numeric types.")
+                }
+            }
+            Expression::Negative(expression) => {
+                let evaluated_expression = self.eval_expression(&expression.clone().unwrap());
+
+                if let Ok(val) = evaluated_expression.downcast::<i64>() {
+                    Box::new(-*val)
+                } else {
+                    panic!("Cannot apply negative on non numeric types.")
+                }
+            }
+            Expression::NOT(expression) => {
+                let evaluated_expression = self.eval_expression(&expression.clone().unwrap());
+
+                if let Ok(val) = evaluated_expression.downcast::<bool>() {
+                    Box::new(!*val)
+                } else {
+                    panic!("Cannot apply NOT on non bool types.")
+                }
             }
             Expression::Addition(left, right) => {
                 let evaluated_binary = self.eval_binary_i64(left, right);
