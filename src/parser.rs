@@ -40,28 +40,52 @@ impl Parser {
 
     pub fn parse(&mut self, holder: &mut DiagnosticHolder) -> Tree {
         Tree {
-            root_expression: self.parse_term(holder),
+            root_expression: self.parse_expression(0, holder),
         }
     }
 
-    fn parse_term(&mut self, holder: &mut DiagnosticHolder) -> Option<Expression> {
-        let mut left = self.parse_factor(holder);
+    fn parse_expression(
+        &mut self,
+        parent_precedence: usize,
+        holder: &mut DiagnosticHolder,
+    ) -> Option<Expression> {
+        let mut left = self.parse_literal_expression(holder);
 
-        while let Some(token) = self.tokens.get(self.position) {
-            if token.token_type == Type::Plus || token.token_type == Type::Minus {
-                self.position += 1;
+        loop {
+            if let Some(precedence_token) = self.tokens.get(self.position) {
+                let precedence = precedence_token.token_type.binary_precedence();
 
-                left = match token.token_type {
-                    Type::Plus => Some(Expression::Addition(
-                        Box::new(left),
-                        Box::new(self.parse_factor(holder)),
-                    )),
-                    Type::Minus => Some(Expression::Subtraction(
-                        Box::new(left),
-                        Box::new(self.parse_factor(holder)),
-                    )),
-                    _ => None,
-                };
+                if precedence == 0 || precedence <= parent_precedence {
+                    break;
+                }
+
+                if let Some(token) = self.tokens.get(self.position) {
+                    self.position += 1;
+
+                    left = match token.token_type {
+                        Type::Plus => Some(Expression::Addition(
+                            Box::new(left),
+                            Box::new(self.parse_expression(precedence, holder)),
+                        )),
+                        Type::Minus => Some(Expression::Subtraction(
+                            Box::new(left),
+                            Box::new(self.parse_expression(precedence, holder)),
+                        )),
+                        Type::Star => Some(Expression::Multiplication(
+                            Box::new(left),
+                            Box::new(self.parse_expression(precedence, holder)),
+                        )),
+                        Type::Slash => Some(Expression::Division(
+                            Box::new(left),
+                            Box::new(self.parse_expression(precedence, holder)),
+                        )),
+                        Type::Percent => Some(Expression::Remainder(
+                            Box::new(left),
+                            Box::new(self.parse_expression(precedence, holder)),
+                        )),
+                        _ => None,
+                    };
+                }
             } else {
                 break;
             }
@@ -70,47 +94,14 @@ impl Parser {
         left
     }
 
-    fn parse_factor(&mut self, holder: &mut DiagnosticHolder) -> Option<Expression> {
-        let mut left = self.parse_expression(holder);
-
-        while let Some(token) = self.tokens.get(self.position) {
-            if token.token_type == Type::Star
-                || token.token_type == Type::Slash
-                || token.token_type == Type::Percent
-            {
-                self.position += 1;
-
-                left = match &token.token_type {
-                    &Type::Star => Some(Expression::Multiplication(
-                        Box::new(left),
-                        Box::new(self.parse_expression(holder)),
-                    )),
-                    &Type::Slash => Some(Expression::Division(
-                        Box::new(left),
-                        Box::new(self.parse_expression(holder)),
-                    )),
-                    &Type::Percent => Some(Expression::Remainder(
-                        Box::new(left),
-                        Box::new(self.parse_expression(holder)),
-                    )),
-                    _ => None,
-                };
-            } else {
-                break;
-            }
-        }
-
-        left
-    }
-
-    fn parse_expression(&mut self, holder: &mut DiagnosticHolder) -> Option<Expression> {
+    fn parse_literal_expression(&mut self, holder: &mut DiagnosticHolder) -> Option<Expression> {
         let current = self.tokens.get(self.position);
 
         if let Some(token) = current {
             match token.token_type {
                 Type::OpenParenthesis => {
                     std::mem::drop(self.assert(Type::OpenParenthesis));
-                    let expression = self.parse_term(holder);
+                    let expression = self.parse_expression(0, holder);
                     std::mem::drop(self.assert(Type::CloseParenthesis));
 
                     Some(Expression::Parenthesis(Box::new(expression)))

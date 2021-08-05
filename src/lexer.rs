@@ -156,3 +156,13 @@ pub enum Type {
     VerticalBar,
     DoubleColon,
 }
+
+impl Type {
+    pub fn binary_precedence(&self) -> usize {
+        match self {
+            Type::Star | Type::Slash | Type::Percent => 2,
+            Type::Plus | Type::Minus => 1,
+            _ => 0,
+        }
+    }
+}
