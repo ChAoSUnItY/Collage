@@ -39,7 +39,7 @@ mod test {
         let evaluator = Evaluator::new(tree.root_expression.unwrap().clone());
 
         assert_eq!(
-            to_string::<T>(evaluator.eval().as_ref().as_any()).unwrap(),
+            to_string::<T>(evaluator.eval(&diagnostic_holder).as_ref().as_any()).unwrap(),
             result.to_string()
         );
     }

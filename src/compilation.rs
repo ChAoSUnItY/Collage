@@ -16,20 +16,20 @@ impl Compilation {
     }
 
     pub fn eval(&self) -> Box<dyn Result> {
-        let tree = self.tree();
+        let mut holder = DiagnosticHolder::new();
+        let tree = self.tree(&mut holder);
         let evaluator = Evaluator::new(tree.root_expression.unwrap().clone());
 
-        evaluator.eval()
+        evaluator.eval(&holder)
     }
 
-    pub fn tree(&self) -> Tree {
-        let mut diagnostic_holder = DiagnosticHolder::new();
+    pub fn tree(&self, holder: &mut DiagnosticHolder) -> Tree {
         let source = self.source.clone();
         let mut lexer = Lexer::new(source);
-        let tokens = lexer.lex(&diagnostic_holder);
+        let tokens = lexer.lex(holder);
 
         let mut parser = Parser::new(tokens);
 
-        parser.parse(&mut diagnostic_holder)
+        parser.parse(holder)
     }
 }

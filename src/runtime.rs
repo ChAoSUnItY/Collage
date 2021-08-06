@@ -1,9 +1,16 @@
 use crate::parser::Expression;
 use std::fmt::Display;
 use std::any::Any;
+use crate::diagnostic::DiagnosticHolder;
 
 pub trait Result: Any + Display {
     fn as_any(&self) -> &dyn Any;
+}
+
+impl Result for &'static str {
+    fn as_any(&self) -> &dyn Any {
+        self
+    }
 }
 
 impl Result for bool {
@@ -11,6 +18,7 @@ impl Result for bool {
         self
     }
 }
+
 impl Result for i64 {
     fn as_any(&self) -> &dyn Any {
         self
@@ -26,8 +34,12 @@ impl Evaluator {
         Self { root_expression }
     }
 
-    pub fn eval(&self) -> Box<dyn Result> {
-        self.eval_expression(&self.root_expression)
+    pub fn eval(&self, holder: &DiagnosticHolder) -> Box<dyn Result> {
+        if holder.success() {
+            self.eval_expression(&self.root_expression)
+        } else {
+            Box::new("<Error>")
+        }
     }
 
     fn eval_expression(&self, expression: &Expression) -> Box<dyn Result> {
