@@ -1,11 +1,10 @@
-use std::any::Any;
-
 use crate::{
     diagnostic::DiagnosticHolder,
     lexer::Lexer,
     parser::{Parser, Tree},
     runtime::Evaluator,
 };
+use crate::runtime::Result;
 
 pub struct Compilation {
     source: String,
@@ -16,7 +15,7 @@ impl Compilation {
         Self { source }
     }
 
-    pub fn eval(&self) -> Box<dyn Any> {
+    pub fn eval(&self) -> Box<dyn Result> {
         let tree = self.tree();
         let evaluator = Evaluator::new(tree.root_expression.unwrap().clone());
 

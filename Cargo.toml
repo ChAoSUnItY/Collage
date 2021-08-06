@@ -7,37 +7,16 @@ categories = ["wasm"]
 readme = "README.md"
 edition = "2018"
 
-[lib]
-path = "src/lib.rs"
-crate-type = ["cdylib"]
-
-[profile.release]
-lto = true
-opt-level = 'z'
-
-[features]
-default = ["wee_alloc"]
-
 [dependencies]
-wasm-bindgen = "0.2.63"
 unicode-segmentation = "1.8.0"
 webassembly = "0.8"
-js-sys = "0.3.51"
+colour = "0.6.0"
 strum = "0.21"
 strum_macros = "0.21"
-
-wee_alloc = { version = "0.4.2", optional = true }
-
-[dependencies.web-sys]
-version = "0.3.22"
-features = ["console"]
 
 [target."cfg(debug_assertions)".dependencies]
 console_error_panic_hook = "0.1.5"
 
 [dev-dependencies]
-wasm-bindgen-test = "0.2.45"
 futures = "0.1.27"
-js-sys = "0.3.22"
-wasm-bindgen-futures = "0.3.22"
 test-case = "1.2.0"
