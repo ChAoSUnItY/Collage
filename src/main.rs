@@ -15,8 +15,16 @@ fn main() {
         if input_source_code == ":exit" {
             break;
         } else {
-            let compilation = Compilation::new(input_source_code);
-            yellow_ln!("{:}", compilation.eval());
+            let mut compilation = Compilation::new(input_source_code);
+            let result = compilation.eval();
+
+            if compilation.holder.success() {
+                yellow_ln!("{:}", result);
+            } else {
+                for i in compilation.holder.diagonistic_units {
+                    red_ln!("{:}", i.to_string());
+                }
+            }
         }
     }
 }

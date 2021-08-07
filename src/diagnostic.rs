@@ -1,5 +1,5 @@
 pub struct DiagnosticHolder {
-    diagonistic_units: Vec<Unit>,
+    pub diagonistic_units: Vec<Unit>,
 }
 
 impl DiagnosticHolder {
@@ -27,4 +27,13 @@ impl DiagnosticHolder {
 pub enum Unit {
     Warning(String),
     Error(String),
+}
+
+impl ToString for Unit {
+    fn to_string(&self) -> String {
+        match self {
+            Unit::Warning(message) => format!("Warning: {}", message),
+            Unit::Error(message) => format!("Error: {}", message)
+        }
+    }
 }

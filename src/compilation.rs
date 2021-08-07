@@ -4,35 +4,38 @@ use crate::{
     parser::{Parser, Tree},
     runtime::Evaluator,
 };
-use crate::runtime::Result;
 use crate::binder::Binder;
+use crate::runtime::Result;
 
 pub struct Compilation {
     source: String,
+    pub holder: DiagnosticHolder,
 }
 
 impl Compilation {
     pub fn new(source: String) -> Self {
-        Self { source }
+        Self {
+            source,
+            holder: DiagnosticHolder::new(),
+        }
     }
 
-    pub fn eval(&self) -> Box<dyn Result> {
-        let mut holder = DiagnosticHolder::new();
-        let tree = self.tree(&mut holder);
+    pub fn eval(&mut self) -> Box<dyn Result> {
+        let tree = self.tree();
         let binder = Binder::new();
-        let bound_expression = binder.bind_expression(tree.root_expression, &mut holder);
+        let bound_expression = binder.bind_expression(tree.root_expression, &mut self.holder);
         let evaluator = Evaluator::new(bound_expression.unwrap());
 
-        evaluator.eval(&holder)
+        evaluator.eval(&self.holder)
     }
 
-    pub fn tree(&self, holder: &mut DiagnosticHolder) -> Tree {
+    pub fn tree(&mut self) -> Tree {
         let source = self.source.clone();
         let mut lexer = Lexer::new(source);
-        let tokens = lexer.lex(holder);
+        let tokens = lexer.lex(&mut self.holder);
 
         let mut parser = Parser::new(tokens);
 
-        parser.parse(holder)
+        parser.parse(&mut self.holder)
     }
 }
