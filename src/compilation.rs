@@ -5,6 +5,7 @@ use crate::{
     runtime::Evaluator,
 };
 use crate::runtime::Result;
+use crate::binder::Binder;
 
 pub struct Compilation {
     source: String,
@@ -18,7 +19,9 @@ impl Compilation {
     pub fn eval(&self) -> Box<dyn Result> {
         let mut holder = DiagnosticHolder::new();
         let tree = self.tree(&mut holder);
-        let evaluator = Evaluator::new(tree.root_expression.unwrap().clone());
+        let binder = Binder::new();
+        let bound_expression = binder.bind_expression(tree.root_expression, &mut holder);
+        let evaluator = Evaluator::new(bound_expression.unwrap());
 
         evaluator.eval(&holder)
     }

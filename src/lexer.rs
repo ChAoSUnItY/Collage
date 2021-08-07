@@ -18,7 +18,7 @@ impl Lexer {
         segmented_source[self.position + offset].to_string()
     }
 
-    pub fn lex(&mut self, diagnostic_holder: &DiagnosticHolder) -> Vec<Token> {
+    pub fn lex(&mut self, diagnostic_holder: &mut DiagnosticHolder) -> Vec<Token> {
         use unicode_segmentation::UnicodeSegmentation;
 
         let segmented_source =
@@ -81,11 +81,21 @@ impl Lexer {
                     self.position += 1;
                 }
                 _ if ("0".."9").contains(char) => {
+                    let mut float = false;
                     let start = *&self.position;
 
                     while self.position < segmented_source.len()
-                        && ("0".."9").contains(&segmented_source[self.position])
+                        && (("0".."9").contains(&segmented_source[self.position])
+                        || segmented_source[self.position] == ".")
                     {
+                        if segmented_source[self.position] == "." {
+                            if float {
+                                diagnostic_holder.error("Unknown number scheme, only one dot is allowed for float numbers.");
+                            } else {
+                                float = true;
+                            }
+                        }
+
                         self.position += 1;
                     }
 

@@ -1,6 +1,13 @@
+use std::string::ToString;
+
+use strum_macros::Display;
+
 use crate::diagnostic::DiagnosticHolder;
 use crate::lexer::Token;
 use crate::parser::Expression;
+
+const POSITIVE_NEGATIVE_TABLE: &[BoundType; 2] = &[BoundType::I64, BoundType::F64];
+const BINARY_ARITHMETIC_TABLE: &[BoundType; 2] = &[BoundType::I64, BoundType::F64];
 
 pub struct Binder {}
 
@@ -22,79 +29,132 @@ impl Binder {
                 Expression::Float(token) => self.bind_float(token.as_ref(), holder),
                 Expression::Positive(expression) => self.bind_positive(*expression, holder),
                 Expression::Negative(expression) => self.bind_negative(*expression, holder),
-                Expression::NOT(expression) => None,
-                Expression::Addition(_, _) => None,
-                Expression::Subtraction(_, _) => None,
-                Expression::Multiplication(_, _) => None,
-                Expression::Division(_, _) => None,
-                Expression::Remainder(_, _) => None,
-                Expression::Parenthesis(expression) => None,
+                Expression::NOT(expression) => self.bind_not(*expression, holder),
+                Expression::Addition(left, right) => self.bind_addition(*left, *right, holder),
+                Expression::Subtraction(left, right) => self.bind_subtraction(*left, *right, holder),
+                Expression::Multiplication(left, right) => self.bind_multiplication(*left, *right, holder),
+                Expression::Division(left, right) => self.bind_division(*left, *right, holder),
+                Expression::Remainder(left, right) => self.bind_remainder(*left, *right, holder),
+                Expression::Parenthesis(expression) => self.bind_parenthesis(*expression, holder),
             }
         } else {
             None
         }
     }
 
-    fn bind_literal(&self, token: &Token, holder: &mut DiagnosticHolder) -> Option<BoundExpression> {
+    fn bind_literal(&self, token: &Token, _holder: &mut DiagnosticHolder) -> Option<BoundExpression> {
         Some(BoundExpression::Literal(token.literal.to_owned()))
     }
 
-    fn bind_bool(&self, token: &Token, holder: &mut DiagnosticHolder) -> Option<BoundExpression> {
+    fn bind_bool(&self, token: &Token, _holder: &mut DiagnosticHolder) -> Option<BoundExpression> {
         Some(BoundExpression::Bool(token.literal.to_owned()))
     }
 
-    fn bind_integer(&self, token: &Token, holder: &mut DiagnosticHolder) -> Option<BoundExpression> {
+    fn bind_integer(&self, token: &Token, _holder: &mut DiagnosticHolder) -> Option<BoundExpression> {
         Some(BoundExpression::Integer(token.literal.to_owned()))
     }
 
-    fn bind_float(&self, token: &Token, holder: &mut DiagnosticHolder) -> Option<BoundExpression> {
+    fn bind_float(&self, token: &Token, _holder: &mut DiagnosticHolder) -> Option<BoundExpression> {
         Some(BoundExpression::Float(token.literal.to_owned()))
     }
 
     fn bind_positive(&self, expression: Option<Expression>, holder: &mut DiagnosticHolder) -> Option<BoundExpression> {
-        Some(BoundExpression::Identity(Box::new(self.bind_expression(expression, holder))))
+        let bound_expression = self.bind_expression(expression, holder);
+
+        if !POSITIVE_NEGATIVE_TABLE.contains(&bound_expression.get_type()) {
+            holder.error(&*format!("Cannot apply positive on type \"{:}\"", bound_expression.get_type().to_string()))
+        }
+
+        Some(BoundExpression::Identity(Box::new(bound_expression)))
     }
 
     fn bind_negative(&self, expression: Option<Expression>, holder: &mut DiagnosticHolder) -> Option<BoundExpression> {
-        Some(BoundExpression::Negation(Box::new(self.bind_expression(expression, holder))))
+        let bound_expression = self.bind_expression(expression, holder);
+
+        if !POSITIVE_NEGATIVE_TABLE.contains(&bound_expression.get_type()) {
+            holder.error(&*format!("Cannot apply negative on type \"{:}\"", bound_expression.get_type().to_string()))
+        }
+
+        Some(BoundExpression::Negation(Box::new(bound_expression)))
     }
 
     fn bind_not(&self, expression: Option<Expression>, holder: &mut DiagnosticHolder) -> Option<BoundExpression> {
-        Some(BoundExpression::NOT(Box::new(self.bind_expression(expression, holder))))
+        let bound_expression = self.bind_expression(expression, holder);
+
+        if bound_expression.get_type() != BoundType::Bool {
+            holder.error(&*format!("Cannot apply NOT on type \"{:}\"", bound_expression.get_type().to_string()))
+        }
+
+        Some(BoundExpression::NOT(Box::new(bound_expression)))
     }
 
     fn bind_addition(&self, left: Option<Expression>, right: Option<Expression>, holder: &mut DiagnosticHolder) -> Option<BoundExpression> {
+        let bound_left = self.bind_expression(left, holder);
+        let bound_right = self.bind_expression(right, holder);
+
+        if !BINARY_ARITHMETIC_TABLE.contains(&bound_left.get_type()) || !BINARY_ARITHMETIC_TABLE.contains(&bound_right.get_type()) {
+            holder.error(&*format!("Cannot apply addition on type \"{:}\" and \"{:}\"", bound_left.get_type().to_string(), bound_right.get_type().to_string()))
+        }
+
         Some(BoundExpression::Addition(
-            Box::new(self.bind_expression(left, holder)),
-            Box::new(self.bind_expression(right, holder)),
+            Box::new(bound_left),
+            Box::new(bound_right),
         ))
     }
 
     fn bind_subtraction(&self, left: Option<Expression>, right: Option<Expression>, holder: &mut DiagnosticHolder) -> Option<BoundExpression> {
-        Some(BoundExpression::Subtraction(
-            Box::new(self.bind_expression(left, holder)),
-            Box::new(self.bind_expression(right, holder)),
+        let bound_left = self.bind_expression(left, holder);
+        let bound_right = self.bind_expression(right, holder);
+
+        if !BINARY_ARITHMETIC_TABLE.contains(&bound_left.get_type()) || !BINARY_ARITHMETIC_TABLE.contains(&bound_right.get_type()) {
+            holder.error(&*format!("Cannot apply subtraction on type \"{:}\" and \"{:}\"", bound_left.get_type().to_string(), bound_right.get_type().to_string()))
+        }
+
+        Some(BoundExpression::Addition(
+            Box::new(bound_left),
+            Box::new(bound_right),
         ))
     }
 
     fn bind_multiplication(&self, left: Option<Expression>, right: Option<Expression>, holder: &mut DiagnosticHolder) -> Option<BoundExpression> {
-        Some(BoundExpression::Multiplication(
-            Box::new(self.bind_expression(left, holder)),
-            Box::new(self.bind_expression(right, holder)),
+        let bound_left = self.bind_expression(left, holder);
+        let bound_right = self.bind_expression(right, holder);
+
+        if !BINARY_ARITHMETIC_TABLE.contains(&bound_left.get_type()) || !BINARY_ARITHMETIC_TABLE.contains(&bound_right.get_type()) {
+            holder.error(&*format!("Cannot apply multiplication on type \"{:}\" and \"{:}\"", bound_left.get_type().to_string(), bound_right.get_type().to_string()))
+        }
+
+        Some(BoundExpression::Addition(
+            Box::new(bound_left),
+            Box::new(bound_right),
         ))
     }
 
     fn bind_division(&self, left: Option<Expression>, right: Option<Expression>, holder: &mut DiagnosticHolder) -> Option<BoundExpression> {
-        Some(BoundExpression::Division(
-            Box::new(self.bind_expression(left, holder)),
-            Box::new(self.bind_expression(right, holder)),
+        let bound_left = self.bind_expression(left, holder);
+        let bound_right = self.bind_expression(right, holder);
+
+        if !BINARY_ARITHMETIC_TABLE.contains(&bound_left.get_type()) || !BINARY_ARITHMETIC_TABLE.contains(&bound_right.get_type()) {
+            holder.error(&*format!("Cannot apply division on type \"{:}\" and \"{:}\"", bound_left.get_type().to_string(), bound_right.get_type().to_string()))
+        }
+
+        Some(BoundExpression::Addition(
+            Box::new(bound_left),
+            Box::new(bound_right),
         ))
     }
 
     fn bind_remainder(&self, left: Option<Expression>, right: Option<Expression>, holder: &mut DiagnosticHolder) -> Option<BoundExpression> {
-        Some(BoundExpression::Remainder(
-            Box::new(self.bind_expression(left, holder)),
-            Box::new(self.bind_expression(right, holder)),
+        let bound_left = self.bind_expression(left, holder);
+        let bound_right = self.bind_expression(right, holder);
+
+        if !BINARY_ARITHMETIC_TABLE.contains(&bound_left.get_type()) || !BINARY_ARITHMETIC_TABLE.contains(&bound_right.get_type()) {
+            holder.error(&*format!("Cannot apply remainder on type \"{:}\" and \"{:}\"", bound_left.get_type().to_string(), bound_right.get_type().to_string()))
+        }
+
+        Some(BoundExpression::Addition(
+            Box::new(bound_left),
+            Box::new(bound_right),
         ))
     }
 
@@ -103,13 +163,13 @@ impl Binder {
     }
 }
 
-#[derive(Debug, Clone, PartialEq)]
+#[derive(Display, Debug, Clone, PartialEq)]
 pub enum BoundType {
     Unidentified,
     String,
     Bool,
     I64,
-    F64
+    F64,
 }
 
 impl BoundType {
@@ -137,6 +197,7 @@ impl TypeDestructable for Option<BoundExpression> {
     }
 }
 
+#[derive(Debug, Clone, PartialEq)]
 pub enum BoundExpression {
     Literal(String),
     Bool(String),

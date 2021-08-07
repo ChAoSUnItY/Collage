@@ -129,7 +129,12 @@ impl Parser {
                     let number_token = self.assert(Type::Number);
 
                     if let Some(token) = number_token {
-                        Some(Expression::Integer(Box::new(token.to_owned())))
+
+                        if token.literal.contains(".") {
+                            Some(Expression::Float(Box::new(token.to_owned())))
+                        } else {
+                            Some(Expression::Integer(Box::new(token.to_owned())))
+                        }
                     } else {
                         holder.error("Unexpected parsing error: Expected integer.");
                         None

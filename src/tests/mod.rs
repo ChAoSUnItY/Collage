@@ -10,7 +10,9 @@ mod test {
         utils::{print_syntax_tree, to_string},
     };
     use std::fmt::Display;
+    use crate::binder::Binder;
 
+    #[test_case("1.0", 1.0 as f64 ; "float literal expression")]
     #[test_case("1 + 2 + 3", 6 as i64 ; "addition expression")]
     #[test_case("1 - 2 - 3", -4 as i64 ; "subtraction expression")]
     #[test_case("1 * 2 * 3", 6 as i64 ; "multiplication expression")]
@@ -25,7 +27,7 @@ mod test {
     fn expression_parsing_test<T: Display + 'static>(source_code: &'static str, result: T) {
         let mut diagnostic_holder = DiagnosticHolder::new();
         let mut lexer = Lexer::new(source_code.to_string());
-        let tokens = lexer.lex(&diagnostic_holder);
+        let tokens = lexer.lex(&mut diagnostic_holder);
 
         let mut parser = Parser::new(tokens);
         let tree = parser.parse(&mut diagnostic_holder);
@@ -36,10 +38,16 @@ mod test {
             true,
         );
 
-        let evaluator = Evaluator::new(tree.root_expression.unwrap().clone());
+        let binder = Binder::new();
+        let bound_expression = binder.bind_expression(tree.root_expression, &mut diagnostic_holder);
+
+        let evaluator = Evaluator::new(bound_expression.unwrap());
+        let result = evaluator.eval(&diagnostic_holder);
+
+        assert!(diagnostic_holder.success());
 
         assert_eq!(
-            to_string::<T>(evaluator.eval(&diagnostic_holder).as_ref().as_any()).unwrap(),
+            to_string::<T>(result.as_ref().as_any()).unwrap(),
             result.to_string()
         );
     }
