@@ -7,7 +7,7 @@ pub trait Result: Any + Display {
     fn as_any(&self) -> &dyn Any;
 }
 
-impl Result for &'static str {
+impl Result for String {
     fn as_any(&self) -> &dyn Any {
         self
     }
@@ -44,12 +44,13 @@ impl Evaluator {
         if holder.success() {
             self.eval_expression(&self.root_expression)
         } else {
-            Box::new("<Error>")
+            Box::new("<Error>".to_string())
         }
     }
 
     fn eval_expression(&self, expression: &BoundExpression) -> Box<dyn Result> {
         match expression {
+            BoundExpression::Literal(string) => Box::new(string.clone()),
             BoundExpression::Bool(string) => Box::new(string.clone().parse::<bool>().unwrap()),
             BoundExpression::Integer(string) => Box::new(string.clone().parse::<i64>().unwrap()),
             BoundExpression::Float(string) => Box::new(string.clone().parse::<f64>().unwrap()),

@@ -129,7 +129,6 @@ impl Parser {
                     let number_token = self.assert(Type::Number);
 
                     if let Some(token) = number_token {
-
                         if token.literal.contains(".") {
                             Some(Expression::Float(Box::new(token.to_owned())))
                         } else {
@@ -140,16 +139,26 @@ impl Parser {
                         None
                     }
                 }
+                Type::Literal => {
+                    let string_literal = self.assert(Type::Literal);
+
+                    if let Some(token) = string_literal {
+                        Some(Expression::Literal(Box::new(token.to_owned())))
+                    } else {
+                        holder.error("Unexpected parsing error: Expected string literal.");
+                        None
+                    }
+                }
                 Type::Identifier => {
                     let identifier_token = self.assert(Type::Identifier);
 
                     if let Some(token) = identifier_token {
                         match token.literal.as_str() {
                             "true" | "false" => Some(Expression::Bool(Box::new(token.to_owned()))),
-                            _ => Some(Expression::Literal(Box::new(token.to_owned()))),
+                            _ => Some(Expression::Identifier(Box::new(token.to_owned()))),
                         }
                     } else {
-                        holder.error("Unexpected parsing error: Expected identifier / literal.");
+                        holder.error("Unexpected parsing error: Expected identifier / type literal.");
                         None
                     }
                 }
@@ -179,6 +188,7 @@ pub struct Tree {
 
 #[derive(Debug, Clone, PartialEq, ToString)]
 pub enum Expression {
+    Identifier(Box<Token>),
     Literal(Box<Token>),
     Bool(Box<Token>),
     Integer(Box<Token>),

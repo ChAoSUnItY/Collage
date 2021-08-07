@@ -80,6 +80,18 @@ impl Lexer {
                     tokens.push(Token::new("|", Type::VerticalBar));
                     self.position += 1;
                 }
+                "\"" => {
+                    self.position += 1;
+
+                    let start = *&self.position;
+
+                    while self.position < segmented_source.len() && segmented_source[self.position] != "\"" {
+                        self.position += 1;
+                    }
+
+                    let string_literal = &segmented_source[start..self.position].join("");
+                    tokens.push(Token::new(&string_literal, Type::Literal));
+                }
                 _ if ("0".."9").contains(char) => {
                     let mut float = false;
                     let start = *&self.position;
@@ -154,6 +166,7 @@ impl SyntaxNode<Token> for Token {
 #[derive(Debug, Clone, PartialEq)]
 pub enum Type {
     Identifier,
+    Literal,
     Number,
     Plus,
     Minus,

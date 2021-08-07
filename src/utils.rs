@@ -9,6 +9,10 @@ pub fn set_panic_hook() {
 }
 
 pub fn to_string<T: Display + 'static>(any: &dyn Any) -> Result<String, &'static str> {
+    if any.type_id() == TypeId::of::<String>() {
+        return Ok(any.downcast_ref::<String>().unwrap().clone())
+    }
+
     if any.type_id() == TypeId::of::<T>() {
         if let Some(val) = any.downcast_ref::<T>() {
             return Ok(val.to_string());

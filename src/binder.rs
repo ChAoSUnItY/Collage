@@ -24,6 +24,7 @@ impl Binder {
         if let Some(expression) = expression {
             match expression {
                 Expression::Literal(token) => self.bind_literal(token.as_ref(), holder),
+                Expression::Identifier(token) => self.bind_identifier(token.as_ref(), holder),
                 Expression::Bool(token) => self.bind_bool(token.as_ref(), holder),
                 Expression::Integer(token) => self.bind_integer(token.as_ref(), holder),
                 Expression::Float(token) => self.bind_float(token.as_ref(), holder),
@@ -44,6 +45,10 @@ impl Binder {
 
     fn bind_literal(&self, token: &Token, _holder: &mut DiagnosticHolder) -> Option<BoundExpression> {
         Some(BoundExpression::Literal(token.literal.to_owned()))
+    }
+
+    fn bind_identifier(&self, token: &Token, _holder: &mut DiagnosticHolder) -> Option<BoundExpression> {
+        Some(BoundExpression::Identifier(token.literal.to_owned()))
     }
 
     fn bind_bool(&self, token: &Token, _holder: &mut DiagnosticHolder) -> Option<BoundExpression> {
@@ -200,6 +205,7 @@ impl TypeDestructable for Option<BoundExpression> {
 #[derive(Debug, Clone, PartialEq)]
 pub enum BoundExpression {
     Literal(String),
+    Identifier(String),
     Bool(String),
     Integer(String),
     Float(String),
@@ -230,6 +236,7 @@ impl BoundExpression {
 
         match self {
             BoundExpression::Literal(_) => BoundType::String,
+            BoundExpression::Identifier(_) => BoundType::Unidentified,
             BoundExpression::Bool(_) => BoundType::Bool,
             BoundExpression::Integer(_) => BoundType::I64,
             BoundExpression::Float(_) => BoundType::F64,
