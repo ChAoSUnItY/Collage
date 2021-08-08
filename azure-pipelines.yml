@@ -19,10 +19,14 @@ jobs:
   # Windows.
   - script: |
       curl -sSf https://sh.rustup.rs | sh -s -- -y
-    displayName: Install rust
+      rustup component add rustfmt
+    displayName: Install rust and components
   - script: |
       cargo build --verbose
     displayName: Build Collage
   - script: |
       cargo test
     displayName: Test Collage
+  - script: |
+      cargo fmt --all -- --check
+    displayName: Check Collage rust format
