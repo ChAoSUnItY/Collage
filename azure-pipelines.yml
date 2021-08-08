@@ -1,22 +1,42 @@
 jobs:
-- job: build_and_test
+- job: build_and_test_windows
   pool:
     vmImage: 'windows-latest'
-  strategy:
-    matrix:
-      stable:
-        rustup_toolchain: stable
-      beta:
-        rustup_toolchain: beta
-      nightly:
-        rustup_toolchain: nightly
-      # TODO: re-enable once new versions are released.
-      # minimum_supported_version_plus_one:
-      #   rustup_toolchain: 1.32.0
-      #minimum_supported_version:
-      #  rustup_toolchain: 1.33.0
   steps:
-  # Windows.
+  - script: |
+      curl -sSf https://sh.rustup.rs | sh -s -- -y
+      rustup component add rustfmt
+    displayName: Install rust and components
+  - script: |
+      cargo build --verbose
+    displayName: Build Collage
+  - script: |
+      cargo test
+    displayName: Test Collage
+  - script: |
+      cargo fmt --all -- --check
+    displayName: Check Collage rust format
+- job: build_and_test_ubuntu
+  pool:
+    vmImage: 'ubuntu-latest'
+  steps:
+  - script: |
+      curl -sSf https://sh.rustup.rs | sh -s -- -y
+      rustup component add rustfmt
+    displayName: Install rust and components
+  - script: |
+      cargo build --verbose
+    displayName: Build Collage
+  - script: |
+      cargo test
+    displayName: Test Collage
+  - script: |
+      cargo fmt --all -- --check
+    displayName: Check Collage rust format
+- job: build_and_test_macos
+  pool:
+    vmImage: 'macOS-latest'
+  steps:
   - script: |
       curl -sSf https://sh.rustup.rs | sh -s -- -y
       rustup component add rustfmt
