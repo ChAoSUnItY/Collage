@@ -1,7 +1,7 @@
 jobs:
 - job: build_and_test
   pool:
-    vmImage: ${{ parameters.vmImage }}
+    vmImage: 'windows-latest'
   strategy:
     matrix:
       stable:
