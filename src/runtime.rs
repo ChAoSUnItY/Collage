@@ -6,10 +6,16 @@ use std::ops::Deref;
 
 pub trait Result: Any + Display {
     fn as_any(&self) -> &dyn Any;
+
+    fn as_display(&self) -> &dyn Display;
 }
 
 impl Result for String {
     fn as_any(&self) -> &dyn Any {
+        self
+    }
+
+    fn as_display(&self) -> &dyn Display {
         self
     }
 }
@@ -18,16 +24,28 @@ impl Result for bool {
     fn as_any(&self) -> &dyn Any {
         self
     }
+
+    fn as_display(&self) -> &dyn Display {
+        self
+    }
 }
 
 impl Result for i64 {
     fn as_any(&self) -> &dyn Any {
         self
     }
+
+    fn as_display(&self) -> &dyn Display {
+        self
+    }
 }
 
 impl Result for f64 {
     fn as_any(&self) -> &dyn Any {
+        self
+    }
+
+    fn as_display(&self) -> &dyn Display {
         self
     }
 }
@@ -87,6 +105,18 @@ impl Evaluator {
                 let evaluated_binary = self.eval_binary::<bool>(left, right);
 
                 Box::new(evaluated_binary[0] && evaluated_binary[1])
+            }
+            BoundExpression::NotEqual(left, right) => {
+                let evaluated_left = self.eval_expression(&left.clone().unwrap());
+                let evaluated_right = self.eval_expression(&right.clone().unwrap());
+
+                Box::new(evaluated_left.to_string() != evaluated_right.to_string())
+            }
+            BoundExpression::Equal(left, right) => {
+                let evaluated_left = self.eval_expression(&left.clone().unwrap());
+                let evaluated_right = self.eval_expression(&right.clone().unwrap());
+
+                Box::new(evaluated_left.to_string() == evaluated_right.to_string())
             }
             BoundExpression::Addition(left, right) => {
                 let evaluated_binary = self.eval_binary::<f64>(left, right);

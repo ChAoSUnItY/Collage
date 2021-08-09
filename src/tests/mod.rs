@@ -27,10 +27,16 @@ mod test {
     #[test_case("+1 + 1", 2. ; "positive expression test")]
     #[test_case("-1 + 1", 0. ; "negative expression test")]
     #[test_case("!true", false ; "NOT expression test")]
+    #[test_case("true || false", true ; "OR expression test")]
+    #[test_case("true && true", false ; "AND expression test")]
+    #[test_case("1 == 1", true ; "equal expression test")]
+    #[test_case("1 != 1", false ; "not equal expression test")]
     fn expression_parsing_test<T: Display + 'static>(source_code: &'static str, result: T) {
         let mut diagnostic_holder = DiagnosticHolder::new();
         let mut lexer = Lexer::new(source_code.trim().to_string());
         let tokens = lexer.lex(&mut diagnostic_holder);
+
+        assert!(diagnostic_holder.success());
 
         let mut parser = Parser::new(tokens);
         let tree = parser.parse(&mut diagnostic_holder);
@@ -41,8 +47,12 @@ mod test {
             true,
         );
 
+        assert!(diagnostic_holder.success());
+
         let binder = Binder::new();
         let bound_expression = binder.bind_expression(tree.root_expression, &mut diagnostic_holder);
+
+        assert!(diagnostic_holder.success());
 
         let evaluator = Evaluator::new(bound_expression.unwrap());
         let result = evaluator.eval(&diagnostic_holder);

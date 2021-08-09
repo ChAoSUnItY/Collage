@@ -54,9 +54,23 @@ impl Lexer {
                     tokens.push(Token::new("%", Type::Percent));
                     self.position += 1;
                 }
+                "=" => {
+                    if self.offset(&segmented_source, 1) == "=" {
+                        tokens.push(Token::new("==", Type::DoubleEqual));
+                        self.position += 2;
+                    } else {
+                        holder.error(&*format!("Unexpected character ="));
+                        self.position += 1;
+                    }
+                }
                 "!" => {
-                    tokens.push(Token::new("!", Type::Bang));
-                    self.position += 1;
+                    if self.offset(&segmented_source, 1) == "=" {
+                        tokens.push(Token::new("!=", Type::BangEqual));
+                        self.position += 2;
+                    } else {
+                        tokens.push(Token::new("!", Type::Bang));
+                        self.position += 1;
+                    }
                 }
                 "&" => {
                     if self.offset(&segmented_source, 1) == "&" {
@@ -70,7 +84,7 @@ impl Lexer {
                 "|" => {
                     if self.offset(&segmented_source, 1) == "|" {
                         tokens.push(Token::new("||", Type::DoublePipe));
-                        self.position += 1;
+                        self.position += 2;
                     } else {
                         holder.error(&*format!("Unexpected character |"));
                         self.position += 1;
@@ -95,10 +109,6 @@ impl Lexer {
                 }
                 "~" => {
                     tokens.push(Token::new("~", Type::Tilde));
-                    self.position += 1;
-                }
-                "|" => {
-                    tokens.push(Token::new("|", Type::VerticalBar));
                     self.position += 1;
                 }
                 "\"" => {
@@ -199,6 +209,8 @@ pub enum Type {
     Bang,
     DoubleAmpersand,
     DoublePipe,
+    BangEqual,
+    DoubleEqual,
     OpenParenthesis,
     CloseParenthesis,
     Arrow,
@@ -210,15 +222,18 @@ pub enum Type {
 impl Type {
     pub fn unary_precedence(&self) -> usize {
         match self {
-            Type::Plus | Type::Minus | Type::Bang => 3,
+            Type::Plus | Type::Minus | Type::Bang => 6,
             _ => 0,
         }
     }
 
     pub fn binary_precedence(&self) -> usize {
         match self {
-            Type::Star | Type::Slash | Type::Percent => 2,
-            Type::Plus | Type::Minus => 1,
+            Type::Star | Type::Slash | Type::Percent => 5,
+            Type::Plus | Type::Minus => 4,
+            Type::BangEqual | Type::DoubleEqual => 3,
+            Type::DoubleAmpersand => 2,
+            Type::DoublePipe => 1,
             _ => 0,
         }
     }

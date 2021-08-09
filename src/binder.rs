@@ -34,6 +34,8 @@ impl Binder {
                 Expression::NOT(expression) => self.bind_not(*expression, holder),
                 Expression::OR(left, right) => self.bind_or(*left, *right, holder),
                 Expression::AND(left, right) => self.bind_and(*left, *right, holder),
+                Expression::BangEqual(left, right) => self.bind_bang_equal(*left, *right, holder),
+                Expression::Equal(left, right) => self.bind_equal(*left, *right, holder),
                 Expression::Addition(left, right) => self.bind_addition(*left, *right, holder),
                 Expression::Subtraction(left, right) => {
                     self.bind_subtraction(*left, *right, holder)
@@ -170,6 +172,52 @@ impl Binder {
         }
 
         Some(BoundExpression::LogicalAnd(
+            Box::new(bound_left),
+            Box::new(bound_right),
+        ))
+    }
+
+    fn bind_bang_equal(
+        &self,
+        left: Option<Expression>,
+        right: Option<Expression>,
+        holder: &mut DiagnosticHolder,
+    ) -> Option<BoundExpression> {
+        let bound_left = self.bind_expression(left, holder);
+        let bound_right = self.bind_expression(right, holder);
+
+        if bound_left.get_type() != bound_right.get_type() {
+            holder.error(&*format!(
+                "Cannot check equality on type \"{:}\" and \"{:}\"",
+                bound_left.get_type().to_string(),
+                bound_right.get_type().to_string()
+            ))
+        }
+
+        Some(BoundExpression::NotEqual(
+            Box::new(bound_left),
+            Box::new(bound_right),
+        ))
+    }
+
+    fn bind_equal(
+        &self,
+        left: Option<Expression>,
+        right: Option<Expression>,
+        holder: &mut DiagnosticHolder,
+    ) -> Option<BoundExpression> {
+        let bound_left = self.bind_expression(left, holder);
+        let bound_right = self.bind_expression(right, holder);
+
+        if bound_left.get_type() != bound_right.get_type() {
+            holder.error(&*format!(
+                "Cannot check equality on type \"{:}\" and \"{:}\"",
+                bound_left.get_type().to_string(),
+                bound_right.get_type().to_string()
+            ))
+        }
+
+        Some(BoundExpression::Equal(
             Box::new(bound_left),
             Box::new(bound_right),
         ))
@@ -344,8 +392,10 @@ pub enum BoundExpression {
     Identity(Box<Option<BoundExpression>>),
     Negation(Box<Option<BoundExpression>>),
     LogicalNot(Box<Option<BoundExpression>>),
-    LogicalAnd(Box<Option<BoundExpression>>, Box<Option<BoundExpression>>),
     LogicalOr(Box<Option<BoundExpression>>, Box<Option<BoundExpression>>),
+    LogicalAnd(Box<Option<BoundExpression>>, Box<Option<BoundExpression>>),
+    NotEqual(Box<Option<BoundExpression>>, Box<Option<BoundExpression>>),
+    Equal(Box<Option<BoundExpression>>, Box<Option<BoundExpression>>),
     Addition(Box<Option<BoundExpression>>, Box<Option<BoundExpression>>),
     Subtraction(Box<Option<BoundExpression>>, Box<Option<BoundExpression>>),
     Multiplication(Box<Option<BoundExpression>>, Box<Option<BoundExpression>>),
@@ -366,6 +416,8 @@ impl BoundExpression {
             BoundExpression::LogicalNot(expression) => expression.get_type(),
             BoundExpression::LogicalOr(_, _) => BoundType::Bool,
             BoundExpression::LogicalAnd(_, _) => BoundType::Bool,
+            BoundExpression::NotEqual(_, _) => BoundType::Bool,
+            BoundExpression::Equal(_, _) => BoundType::Bool,
             BoundExpression::Addition(_, _) => BoundType::Number,
             BoundExpression::Subtraction(_, _) => BoundType::Number,
             BoundExpression::Multiplication(_, _) => BoundType::Number,

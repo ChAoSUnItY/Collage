@@ -91,6 +91,14 @@ impl Parser {
                         Box::new(left),
                         Box::new(self.parse_expression(precedence, holder)),
                     )),
+                    Type::BangEqual => Some(Expression::BangEqual(
+                        Box::new(left),
+                        Box::new(self.parse_expression(precedence, holder)),
+                    )),
+                    Type::DoubleEqual => Some(Expression::Equal(
+                        Box::new(left),
+                        Box::new(self.parse_expression(precedence, holder)),
+                    )),
                     Type::Plus => Some(Expression::Addition(
                         Box::new(left),
                         Box::new(self.parse_expression(precedence, holder)),
@@ -202,6 +210,8 @@ pub enum Expression {
     NOT(Box<Option<Expression>>),
     AND(Box<Option<Expression>>, Box<Option<Expression>>),
     OR(Box<Option<Expression>>, Box<Option<Expression>>),
+    Equal(Box<Option<Expression>>, Box<Option<Expression>>),
+    BangEqual(Box<Option<Expression>>, Box<Option<Expression>>),
     Addition(Box<Option<Expression>>, Box<Option<Expression>>),
     Subtraction(Box<Option<Expression>>, Box<Option<Expression>>),
     Multiplication(Box<Option<Expression>>, Box<Option<Expression>>),
@@ -218,6 +228,8 @@ impl SyntaxNode<Expression> for Expression {
             Expression::NOT(expression) => vec![expression],
             Expression::OR(left, right) => vec![left, right],
             Expression::AND(left, right) => vec![left, right],
+            Expression::Equal(left, right) => vec![left, right],
+            Expression::BangEqual(left, right) => vec![left, right],
             Expression::Addition(left, right) => vec![left, right],
             Expression::Subtraction(left, right) => vec![left, right],
             Expression::Multiplication(left, right) => vec![left, right],
