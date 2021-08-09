@@ -14,17 +14,19 @@ fn main() {
 
         input_source_code = input_source_code.trim().to_string();
 
-        if input_source_code == ":exit" {
-            break;
-        } else {
-            let mut compilation = Compilation::new(input_source_code);
-            let result = compilation.eval();
+        match &*input_source_code {
+            ":exit" => break,
+            _ => {
+                let mut compilation = Compilation::new(input_source_code);
+                let expression = compilation.lex_parse();
+                let bound_expression = compilation.bind_tree(expression);
 
-            if compilation.holder.success() {
-                yellow_ln!("{:}", result);
-            } else {
-                for i in compilation.holder.diagonistic_units {
-                    red_ln!("{:}", i.to_string());
+                if compilation.holder.success() {
+                    yellow_ln!("{:}", compilation.eval_expression(bound_expression));
+                } else {
+                    for i in compilation.holder.diagonistic_units {
+                        red_ln!("{:}", i.to_string());
+                    }
                 }
             }
         }

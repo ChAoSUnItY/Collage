@@ -1,4 +1,4 @@
-use crate::binder::Binder;
+use crate::binder::{Binder, BoundExpression};
 use crate::runtime::Result;
 use crate::{
     diagnostic::DiagnosticHolder,
@@ -21,7 +21,7 @@ impl Compilation {
     }
 
     pub fn eval(&mut self) -> Box<dyn Result> {
-        let tree = self.tree();
+        let tree = self.lex_parse();
         let binder = Binder::new();
         let bound_expression = binder.bind_expression(tree.root_expression, &mut self.holder);
         let evaluator = Evaluator::new(bound_expression.unwrap());
@@ -29,7 +29,22 @@ impl Compilation {
         evaluator.eval(&self.holder)
     }
 
-    pub fn tree(&mut self) -> Tree {
+    pub fn bind_tree(&mut self, tree: Tree) -> Option<BoundExpression> {
+        let binder = Binder::new();
+
+        binder.bind_expression(tree.root_expression, &mut self.holder)
+    }
+
+    pub fn eval_expression(
+        &mut self,
+        bound_expression: Option<BoundExpression>,
+    ) -> Box<dyn Result> {
+        let evaluator = Evaluator::new(bound_expression.unwrap());
+
+        evaluator.eval(&self.holder)
+    }
+
+    pub fn lex_parse(&mut self) -> Tree {
         let source = self.source.clone();
         let mut lexer = Lexer::new(source);
         let tokens = lexer.lex(&mut self.holder);

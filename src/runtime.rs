@@ -1,7 +1,8 @@
-use crate::binder::BoundExpression;
+use crate::binder::{BoundExpression, BoundType};
 use crate::diagnostic::DiagnosticHolder;
 use std::any::Any;
 use std::fmt::Display;
+use std::ops::Deref;
 
 pub trait Result: Any + Display {
     fn as_any(&self) -> &dyn Any;
@@ -52,8 +53,7 @@ impl Evaluator {
         match expression {
             BoundExpression::Literal(string) => Box::new(string.clone()),
             BoundExpression::Bool(string) => Box::new(string.clone().parse::<bool>().unwrap()),
-            BoundExpression::Integer(string) => Box::new(string.clone().parse::<i64>().unwrap()),
-            BoundExpression::Float(string) => Box::new(string.clone().parse::<f64>().unwrap()),
+            BoundExpression::Number(string) => Box::new(string.clone().parse::<f64>().unwrap()),
             BoundExpression::Parenthesis(expression) => {
                 self.eval_expression(&expression.clone().unwrap())
             }
@@ -63,13 +63,13 @@ impl Evaluator {
             BoundExpression::Negation(expression) => {
                 let evaluated_expression = self.eval_expression(&expression.clone().unwrap());
 
-                if let Some(val) = evaluated_expression.as_any().downcast_ref::<i64>() {
+                if let Some(val) = evaluated_expression.as_any().downcast_ref::<f64>() {
                     Box::new(-val)
                 } else {
                     panic!("Cannot apply negative on non numeric types.")
                 }
             }
-            BoundExpression::NOT(expression) => {
+            BoundExpression::LogicalNot(expression) => {
                 let evaluated_expression = self.eval_expression(&expression.clone().unwrap());
 
                 if let Some(val) = evaluated_expression.as_any().downcast_ref::<bool>() {
@@ -78,28 +78,38 @@ impl Evaluator {
                     panic!("Cannot apply negative on non numeric types.")
                 }
             }
+            BoundExpression::LogicalOr(left, right) => {
+                let evaluated_binary = self.eval_binary::<bool>(left, right);
+
+                Box::new(evaluated_binary[0] || evaluated_binary[1])
+            }
+            BoundExpression::LogicalAnd(left, right) => {
+                let evaluated_binary = self.eval_binary::<bool>(left, right);
+
+                Box::new(evaluated_binary[0] && evaluated_binary[1])
+            }
             BoundExpression::Addition(left, right) => {
-                let evaluated_binary = self.eval_binary_i64(left, right);
+                let evaluated_binary = self.eval_binary::<f64>(left, right);
 
                 Box::new(evaluated_binary[0] + evaluated_binary[1])
             }
             BoundExpression::Subtraction(left, right) => {
-                let evaluated_binary = self.eval_binary_i64(left, right);
+                let evaluated_binary = self.eval_binary::<f64>(left, right);
 
                 Box::new(evaluated_binary[0] - evaluated_binary[1])
             }
             BoundExpression::Multiplication(left, right) => {
-                let evaluated_binary = self.eval_binary_i64(left, right);
+                let evaluated_binary = self.eval_binary::<f64>(left, right);
 
                 Box::new(evaluated_binary[0] * evaluated_binary[1])
             }
             BoundExpression::Division(left, right) => {
-                let evaluated_binary = self.eval_binary_i64(left, right);
+                let evaluated_binary = self.eval_binary::<f64>(left, right);
 
                 Box::new(evaluated_binary[0] / evaluated_binary[1])
             }
             BoundExpression::Remainder(left, right) => {
-                let evaluated_binary = self.eval_binary_i64(left, right);
+                let evaluated_binary = self.eval_binary::<f64>(left, right);
 
                 Box::new(evaluated_binary[0] % evaluated_binary[1])
             }
@@ -107,20 +117,23 @@ impl Evaluator {
         }
     }
 
-    fn eval_binary_i64(
+    fn eval_binary<T>(
         &self,
         left: &Box<Option<BoundExpression>>,
         right: &Box<Option<BoundExpression>>,
-    ) -> [i64; 2] {
+    ) -> [T; 2]
+    where
+        T: Result + Clone,
+    {
         [
             (*self.eval_expression(&left.clone().unwrap()))
                 .as_any()
-                .downcast_ref::<i64>()
+                .downcast_ref::<T>()
                 .unwrap()
                 .to_owned(),
             (*self.eval_expression(&right.clone().unwrap()))
                 .as_any()
-                .downcast_ref::<i64>()
+                .downcast_ref::<T>()
                 .unwrap()
                 .to_owned(),
         ]

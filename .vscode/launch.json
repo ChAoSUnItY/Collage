@@ -3,19 +3,58 @@
     "configurations": [
         {
             "type": "lldb",
+            "windows": {
+                "type": "cppvsdbg"
+              },
             "request": "launch",
-            "name": "Debug integration test 'app'",
+            "name": "Debug unit tests in library 'collage'",
             "cargo": {
                 "args": [
                     "test",
-                    "--test=app",
-                    "--package=collage",
-                    "--",
-                    "--nocapture"
+                    "--no-run",
+                    "--lib",
+                    "--package=collage"
                 ],
                 "filter": {
-                    "name": "app",
-                    "kind": "test"
+                    "name": "collage",
+                    "kind": "lib"
+                }
+            },
+            "args": [],
+            "cwd": "${workspaceFolder}"
+        },
+        {
+            "type": "lldb",
+            "request": "launch",
+            "name": "Debug executable 'collage'",
+            "cargo": {
+                "args": [
+                    "build",
+                    "--bin=collage",
+                    "--package=collage"
+                ],
+                "filter": {
+                    "name": "collage",
+                    "kind": "bin"
+                }
+            },
+            "args": [],
+            "cwd": "${workspaceFolder}"
+        },
+        {
+            "type": "lldb",
+            "request": "launch",
+            "name": "Debug unit tests in executable 'collage'",
+            "cargo": {
+                "args": [
+                    "test",
+                    "--no-run",
+                    "--bin=collage",
+                    "--package=collage"
+                ],
+                "filter": {
+                    "name": "collage",
+                    "kind": "bin"
                 }
             },
             "args": [],

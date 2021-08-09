@@ -18,7 +18,7 @@ impl Lexer {
         segmented_source[self.position + offset].to_string()
     }
 
-    pub fn lex(&mut self, diagnostic_holder: &mut DiagnosticHolder) -> Vec<Token> {
+    pub fn lex(&mut self, holder: &mut DiagnosticHolder) -> Vec<Token> {
         use unicode_segmentation::UnicodeSegmentation;
 
         let segmented_source =
@@ -58,6 +58,24 @@ impl Lexer {
                     tokens.push(Token::new("!", Type::Bang));
                     self.position += 1;
                 }
+                "&" => {
+                    if self.offset(&segmented_source, 1) == "&" {
+                        tokens.push(Token::new("&&", Type::DoubleAmpersand));
+                        self.position += 2;
+                    } else {
+                        holder.error(&*format!("Unexpected character &"));
+                        self.position += 1;
+                    }
+                }
+                "|" => {
+                    if self.offset(&segmented_source, 1) == "|" {
+                        tokens.push(Token::new("||", Type::DoublePipe));
+                        self.position += 1;
+                    } else {
+                        holder.error(&*format!("Unexpected character |"));
+                        self.position += 1;
+                    }
+                }
                 "(" => {
                     tokens.push(Token::new("(", Type::OpenParenthesis));
                     self.position += 1;
@@ -70,6 +88,9 @@ impl Lexer {
                     if self.offset(&segmented_source, 1) == ":" {
                         tokens.push(Token::new("::", Type::DoubleColon));
                         self.position += 2;
+                    } else {
+                        holder.error(&*format!("Unexpected character :"));
+                        self.position += 1;
                     }
                 }
                 "~" => {
@@ -104,7 +125,7 @@ impl Lexer {
                     {
                         if segmented_source[self.position] == "." {
                             if float {
-                                diagnostic_holder.error("Unknown number scheme, only one dot is allowed for float numbers.");
+                                holder.error("Unknown number scheme, only one dot is allowed for float numbers.");
                             } else {
                                 float = true;
                             }
@@ -176,6 +197,8 @@ pub enum Type {
     Slash,
     Percent,
     Bang,
+    DoubleAmpersand,
+    DoublePipe,
     OpenParenthesis,
     CloseParenthesis,
     Arrow,

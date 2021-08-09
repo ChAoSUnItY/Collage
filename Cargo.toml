@@ -20,3 +20,6 @@ console_error_panic_hook = "0.1.5"
 [dev-dependencies]
 futures = "0.1.27"
 test-case = "1.2.0"
+
+[profile.dev]
+debug = 2

@@ -83,6 +83,14 @@ impl Parser {
                 self.position += 1;
 
                 left = match precedence_token.token_type {
+                    Type::DoubleAmpersand => Some(Expression::AND(
+                        Box::new(left),
+                        Box::new(self.parse_expression(precedence, holder)),
+                    )),
+                    Type::DoublePipe => Some(Expression::OR(
+                        Box::new(left),
+                        Box::new(self.parse_expression(precedence, holder)),
+                    )),
                     Type::Plus => Some(Expression::Addition(
                         Box::new(left),
                         Box::new(self.parse_expression(precedence, holder)),
@@ -129,11 +137,7 @@ impl Parser {
                     let number_token = self.assert(Type::Number);
 
                     if let Some(token) = number_token {
-                        if token.literal.contains(".") {
-                            Some(Expression::Float(Box::new(token.to_owned())))
-                        } else {
-                            Some(Expression::Integer(Box::new(token.to_owned())))
-                        }
+                        Some(Expression::Number(Box::new(token.to_owned())))
                     } else {
                         holder.error("Unexpected parsing error: Expected integer.");
                         None
@@ -192,11 +196,12 @@ pub enum Expression {
     Identifier(Box<Token>),
     Literal(Box<Token>),
     Bool(Box<Token>),
-    Integer(Box<Token>),
-    Float(Box<Token>),
+    Number(Box<Token>),
     Positive(Box<Option<Expression>>),
     Negative(Box<Option<Expression>>),
     NOT(Box<Option<Expression>>),
+    AND(Box<Option<Expression>>, Box<Option<Expression>>),
+    OR(Box<Option<Expression>>, Box<Option<Expression>>),
     Addition(Box<Option<Expression>>, Box<Option<Expression>>),
     Subtraction(Box<Option<Expression>>, Box<Option<Expression>>),
     Multiplication(Box<Option<Expression>>, Box<Option<Expression>>),
@@ -211,6 +216,8 @@ impl SyntaxNode<Expression> for Expression {
             Expression::Positive(expression) => vec![expression],
             Expression::Negative(expression) => vec![expression],
             Expression::NOT(expression) => vec![expression],
+            Expression::OR(left, right) => vec![left, right],
+            Expression::AND(left, right) => vec![left, right],
             Expression::Addition(left, right) => vec![left, right],
             Expression::Subtraction(left, right) => vec![left, right],
             Expression::Multiplication(left, right) => vec![left, right],
@@ -225,7 +232,7 @@ impl SyntaxNode<Expression> for Expression {
         match self {
             Expression::Literal(token) => format!("{}({})", self.to_string(), token.literal),
             Expression::Bool(token) => format!("{}({})", self.to_string(), token.literal),
-            Expression::Integer(token) => format!("{}({})", self.to_string(), token.literal),
+            Expression::Number(token) => format!("{}({})", self.to_string(), token.literal),
             _ => self.to_string(),
         }
     }
