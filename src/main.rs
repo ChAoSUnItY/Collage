@@ -16,6 +16,7 @@ fn main() {
 
         match &*input_source_code {
             ":exit" => break,
+            ":cls" => print!("{esc}[2J{esc}[1;1H", esc = 27 as char),
             _ => {
                 let mut compilation = Compilation::new(input_source_code);
                 let expression = compilation.lex_parse();
