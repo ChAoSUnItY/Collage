@@ -118,6 +118,26 @@ impl Evaluator {
 
                 Box::new(evaluated_left.to_string() == evaluated_right.to_string())
             }
+            BoundExpression::Greater(left, right) => {
+                let evaluated_binary = self.eval_binary::<f64>(left, right);
+
+                Box::new(evaluated_binary[0] > evaluated_binary[1])
+            }
+            BoundExpression::GreaterEqual(left, right) => {
+                let evaluated_binary = self.eval_binary::<f64>(left, right);
+
+                Box::new(evaluated_binary[0] >= evaluated_binary[1])
+            }
+            BoundExpression::Less(left, right) => {
+                let evaluated_binary = self.eval_binary::<f64>(left, right);
+
+                Box::new(evaluated_binary[0] < evaluated_binary[1])
+            }
+            BoundExpression::LessEqual(left, right) => {
+                let evaluated_binary = self.eval_binary::<f64>(left, right);
+
+                Box::new(evaluated_binary[0] <= evaluated_binary[1])
+            }
             BoundExpression::Addition(left, right) => {
                 let evaluated_binary = self.eval_binary::<f64>(left, right);
 

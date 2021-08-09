@@ -36,6 +36,12 @@ impl Binder {
                 Expression::AND(left, right) => self.bind_and(*left, *right, holder),
                 Expression::BangEqual(left, right) => self.bind_bang_equal(*left, *right, holder),
                 Expression::Equal(left, right) => self.bind_equal(*left, *right, holder),
+                Expression::Greater(left, right) => self.bind_greater(*left, *right, holder),
+                Expression::GreaterEqual(left, right) => {
+                    self.bind_greater_equal(*left, *right, holder)
+                }
+                Expression::Less(left, right) => self.bind_less(*left, *right, holder),
+                Expression::LessEqual(left, right) => self.bind_less_equal(*left, *right, holder),
                 Expression::Addition(left, right) => self.bind_addition(*left, *right, holder),
                 Expression::Subtraction(left, right) => {
                     self.bind_subtraction(*left, *right, holder)
@@ -223,6 +229,102 @@ impl Binder {
         ))
     }
 
+    fn bind_greater(
+        &self,
+        left: Option<Expression>,
+        right: Option<Expression>,
+        holder: &mut DiagnosticHolder,
+    ) -> Option<BoundExpression> {
+        let bound_left = self.bind_expression(left, holder);
+        let bound_right = self.bind_expression(right, holder);
+
+        if bound_left.get_type() != BoundType::Number || bound_right.get_type() != BoundType::Number
+        {
+            holder.error(&*format!(
+                "Cannot apply greater on type \"{:}\" and \"{:}\"",
+                bound_left.get_type().to_string(),
+                bound_right.get_type().to_string()
+            ))
+        }
+
+        Some(BoundExpression::Greater(
+            Box::new(bound_left),
+            Box::new(bound_right),
+        ))
+    }
+
+    fn bind_greater_equal(
+        &self,
+        left: Option<Expression>,
+        right: Option<Expression>,
+        holder: &mut DiagnosticHolder,
+    ) -> Option<BoundExpression> {
+        let bound_left = self.bind_expression(left, holder);
+        let bound_right = self.bind_expression(right, holder);
+
+        if bound_left.get_type() != BoundType::Number || bound_right.get_type() != BoundType::Number
+        {
+            holder.error(&*format!(
+                "Cannot apply greater equal than on type \"{:}\" and \"{:}\"",
+                bound_left.get_type().to_string(),
+                bound_right.get_type().to_string()
+            ))
+        }
+
+        Some(BoundExpression::GreaterEqual(
+            Box::new(bound_left),
+            Box::new(bound_right),
+        ))
+    }
+
+    fn bind_less(
+        &self,
+        left: Option<Expression>,
+        right: Option<Expression>,
+        holder: &mut DiagnosticHolder,
+    ) -> Option<BoundExpression> {
+        let bound_left = self.bind_expression(left, holder);
+        let bound_right = self.bind_expression(right, holder);
+
+        if bound_left.get_type() != BoundType::Number || bound_right.get_type() != BoundType::Number
+        {
+            holder.error(&*format!(
+                "Cannot apply less than on type \"{:}\" and \"{:}\"",
+                bound_left.get_type().to_string(),
+                bound_right.get_type().to_string()
+            ))
+        }
+
+        Some(BoundExpression::Less(
+            Box::new(bound_left),
+            Box::new(bound_right),
+        ))
+    }
+
+    fn bind_less_equal(
+        &self,
+        left: Option<Expression>,
+        right: Option<Expression>,
+        holder: &mut DiagnosticHolder,
+    ) -> Option<BoundExpression> {
+        let bound_left = self.bind_expression(left, holder);
+        let bound_right = self.bind_expression(right, holder);
+
+        if bound_left.get_type() != BoundType::Number || bound_right.get_type() != BoundType::Number
+        {
+            holder.error(&*format!(
+                "Cannot apply less equal than on type \"{:}\" and \"{:}\"",
+                bound_left.get_type().to_string(),
+                bound_right.get_type().to_string()
+            ))
+        }
+
+        Some(BoundExpression::LessEqual(
+            Box::new(bound_left),
+            Box::new(bound_right),
+        ))
+    }
+
     fn bind_addition(
         &self,
         left: Option<Expression>,
@@ -265,7 +367,7 @@ impl Binder {
             ))
         }
 
-        Some(BoundExpression::Addition(
+        Some(BoundExpression::Subtraction(
             Box::new(bound_left),
             Box::new(bound_right),
         ))
@@ -289,7 +391,7 @@ impl Binder {
             ))
         }
 
-        Some(BoundExpression::Addition(
+        Some(BoundExpression::Multiplication(
             Box::new(bound_left),
             Box::new(bound_right),
         ))
@@ -313,7 +415,7 @@ impl Binder {
             ))
         }
 
-        Some(BoundExpression::Addition(
+        Some(BoundExpression::Division(
             Box::new(bound_left),
             Box::new(bound_right),
         ))
@@ -337,7 +439,7 @@ impl Binder {
             ))
         }
 
-        Some(BoundExpression::Addition(
+        Some(BoundExpression::Remainder(
             Box::new(bound_left),
             Box::new(bound_right),
         ))
@@ -396,6 +498,10 @@ pub enum BoundExpression {
     LogicalAnd(Box<Option<BoundExpression>>, Box<Option<BoundExpression>>),
     NotEqual(Box<Option<BoundExpression>>, Box<Option<BoundExpression>>),
     Equal(Box<Option<BoundExpression>>, Box<Option<BoundExpression>>),
+    Greater(Box<Option<BoundExpression>>, Box<Option<BoundExpression>>),
+    GreaterEqual(Box<Option<BoundExpression>>, Box<Option<BoundExpression>>),
+    Less(Box<Option<BoundExpression>>, Box<Option<BoundExpression>>),
+    LessEqual(Box<Option<BoundExpression>>, Box<Option<BoundExpression>>),
     Addition(Box<Option<BoundExpression>>, Box<Option<BoundExpression>>),
     Subtraction(Box<Option<BoundExpression>>, Box<Option<BoundExpression>>),
     Multiplication(Box<Option<BoundExpression>>, Box<Option<BoundExpression>>),
@@ -418,6 +524,10 @@ impl BoundExpression {
             BoundExpression::LogicalAnd(_, _) => BoundType::Bool,
             BoundExpression::NotEqual(_, _) => BoundType::Bool,
             BoundExpression::Equal(_, _) => BoundType::Bool,
+            BoundExpression::Greater(_, _) => BoundType::Bool,
+            BoundExpression::GreaterEqual(_, _) => BoundType::Bool,
+            BoundExpression::Less(_, _) => BoundType::Bool,
+            BoundExpression::LessEqual(_, _) => BoundType::Bool,
             BoundExpression::Addition(_, _) => BoundType::Number,
             BoundExpression::Subtraction(_, _) => BoundType::Number,
             BoundExpression::Multiplication(_, _) => BoundType::Number,

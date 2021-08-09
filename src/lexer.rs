@@ -90,6 +90,24 @@ impl Lexer {
                         self.position += 1;
                     }
                 }
+                ">" => {
+                    if self.offset(&segmented_source, 1) == "=" {
+                        tokens.push(Token::new(">=", Type::GreaterEqualThan));
+                        self.position += 2;
+                    } else {
+                        tokens.push(Token::new(">", Type::GreaterThan));
+                        self.position += 1;
+                    }
+                }
+                "<" => {
+                    if self.offset(&segmented_source, 1) == "=" {
+                        tokens.push(Token::new("<=", Type::LessEqualThan));
+                        self.position += 2;
+                    } else {
+                        tokens.push(Token::new("<", Type::LessThan));
+                        self.position += 1;
+                    }
+                }
                 "(" => {
                     tokens.push(Token::new("(", Type::OpenParenthesis));
                     self.position += 1;
@@ -211,6 +229,10 @@ pub enum Type {
     DoublePipe,
     BangEqual,
     DoubleEqual,
+    GreaterThan,
+    GreaterEqualThan,
+    LessThan,
+    LessEqualThan,
     OpenParenthesis,
     CloseParenthesis,
     Arrow,
@@ -222,15 +244,16 @@ pub enum Type {
 impl Type {
     pub fn unary_precedence(&self) -> usize {
         match self {
-            Type::Plus | Type::Minus | Type::Bang => 6,
+            Type::Plus | Type::Minus | Type::Bang => 7,
             _ => 0,
         }
     }
 
     pub fn binary_precedence(&self) -> usize {
         match self {
-            Type::Star | Type::Slash | Type::Percent => 5,
-            Type::Plus | Type::Minus => 4,
+            Type::Star | Type::Slash | Type::Percent => 6,
+            Type::Plus | Type::Minus => 5,
+            Type::GreaterThan | Type::GreaterEqualThan | Type::LessThan | Type::LessEqualThan => 4,
             Type::BangEqual | Type::DoubleEqual => 3,
             Type::DoubleAmpersand => 2,
             Type::DoublePipe => 1,
