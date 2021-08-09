@@ -2,6 +2,7 @@
 mod test {
     use test_case::test_case;
 
+    use crate::binder::Binder;
     use crate::{
         diagnostic::DiagnosticHolder,
         lexer::Lexer,
@@ -10,7 +11,6 @@ mod test {
         utils::{print_syntax_tree, to_string},
     };
     use std::fmt::Display;
-    use crate::binder::Binder;
 
     #[test_case("\"Hi\"", "Hi" ; "string literal test")]
     #[test_case("true", true ; "bool literal test")]

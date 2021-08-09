@@ -85,7 +85,9 @@ impl Lexer {
 
                     let start = *&self.position;
 
-                    while self.position < segmented_source.len() && segmented_source[self.position] != "\"" {
+                    while self.position < segmented_source.len()
+                        && segmented_source[self.position] != "\""
+                    {
                         self.position += 1;
                     }
 
@@ -98,7 +100,7 @@ impl Lexer {
 
                     while self.position < segmented_source.len()
                         && (("0".."9").contains(&segmented_source[self.position])
-                        || segmented_source[self.position] == ".")
+                            || segmented_source[self.position] == ".")
                     {
                         if segmented_source[self.position] == "." {
                             if float {

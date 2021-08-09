@@ -33,7 +33,7 @@ impl ToString for Unit {
     fn to_string(&self) -> String {
         match self {
             Unit::Warning(message) => format!("Warning: {}", message),
-            Unit::Error(message) => format!("Error: {}", message)
+            Unit::Error(message) => format!("Error: {}", message),
         }
     }
 }

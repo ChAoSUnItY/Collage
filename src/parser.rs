@@ -158,7 +158,8 @@ impl Parser {
                             _ => Some(Expression::Identifier(Box::new(token.to_owned()))),
                         }
                     } else {
-                        holder.error("Unexpected parsing error: Expected identifier / type literal.");
+                        holder
+                            .error("Unexpected parsing error: Expected identifier / type literal.");
                         None
                     }
                 }

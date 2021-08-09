@@ -1,11 +1,11 @@
+use crate::binder::Binder;
+use crate::runtime::Result;
 use crate::{
     diagnostic::DiagnosticHolder,
     lexer::Lexer,
     parser::{Parser, Tree},
     runtime::Evaluator,
 };
-use crate::binder::Binder;
-use crate::runtime::Result;
 
 pub struct Compilation {
     source: String,

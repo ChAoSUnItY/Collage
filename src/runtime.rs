@@ -1,7 +1,7 @@
-use std::fmt::Display;
-use std::any::Any;
-use crate::diagnostic::DiagnosticHolder;
 use crate::binder::BoundExpression;
+use crate::diagnostic::DiagnosticHolder;
+use std::any::Any;
+use std::fmt::Display;
 
 pub trait Result: Any + Display {
     fn as_any(&self) -> &dyn Any;
